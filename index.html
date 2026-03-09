@@ -1053,6 +1053,9 @@ textarea:focus { border-color: var(--cyan); }
   background: linear-gradient(180deg, rgba(0,245,255,.08), rgba(255,45,120,.08));
   border: 1px solid rgba(0,245,255,.25);
   box-shadow: 0 0 24px rgba(0,245,255,.08);
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 16px;
 }
 #moderator-panel::before {
   background: linear-gradient(90deg, transparent, var(--cyan), transparent);
@@ -1358,7 +1361,7 @@ let SERVER_OFFSET = 0;
 onValue(serverOffsetRef, snap => { SERVER_OFFSET = snap.val() || 0; });
 
 const APP_VERSION = 'v9 — NOVA';
-const LS_KEY = 'temazos_rooms_v1';
+const LS_KEY = 'temazos_v9_nova';
 const ROOM_TIMER_MS = 35000;
 const MODES = {
   bala: { label: 'Bala', targetScore: 5 },
@@ -1391,6 +1394,7 @@ let pendingLinkRoomCode = '';
 let roomUnsub = null;
 let roomData = null;
 let timerInterval = null;
+let nameInputDirty = false;
 
 const GENRE_LISTS = {
   pop: {
@@ -1586,6 +1590,14 @@ https://music.youtube.com/search?q=Mil+Noches+Marc+Segui | 2022 | Mil Noches - M
 
 function loadLocalState() {
   try {
+    // Migrate data from old LS key if new key has no data yet
+    const OLD_LS_KEY = 'temazos_rooms_v1';
+    if (!localStorage.getItem(LS_KEY) && localStorage.getItem(OLD_LS_KEY)) {
+      try {
+        const oldData = JSON.parse(localStorage.getItem(OLD_LS_KEY));
+        if (oldData) { localStorage.setItem(LS_KEY, JSON.stringify(oldData)); }
+      } catch (_) {}
+    }
     const raw = localStorage.getItem(LS_KEY);
     const parsed = raw ? JSON.parse(raw) : {};
     const merged = { ...DEFAULT_LOCAL, ...parsed };
@@ -1599,6 +1611,11 @@ function loadLocalState() {
 }
 function saveLocalState() {
   localStorage.setItem(LS_KEY, JSON.stringify(localState));
+}
+function trySetNameFromStorage() {
+  if (!nameInputDirty && localState.playerName) {
+    document.getElementById('home-player-name').value = localState.playerName;
+  }
 }
 function nowServer() { return Date.now() + SERVER_OFFSET; }
 function esc(str='') { return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -2209,10 +2226,8 @@ async function nextRoundStep() {
     results: {}
   };
 
-  await update(ref(db), {
-    [`rooms/${currentRoomCode}/meta/status`]: 'round_ready',
-    [`rooms/${currentRoomCode}/currentRound`]: cleanRound
-  });
+  await set(ref(db, `rooms/${currentRoomCode}/currentRound`), cleanRound);
+  await set(ref(db, `rooms/${currentRoomCode}/meta/status`), 'round_ready');
 
   showToast('➡ Lista para cargar la siguiente ronda');
 }
@@ -2585,7 +2600,7 @@ document.getElementById('btn-open-chatgpt').addEventListener('click', async () =
   setTimeout(() => el.className = 'parse-status', 2600);
 });
 document.getElementById('btn-reset-local-used').addEventListener('click', () => showToast('En esta versión, las canciones usadas se controlan por sala en Firebase.'));
-document.getElementById('home-player-name').addEventListener('input', e => { localState.playerName = e.target.value; saveLocalState(); renderLastRoomCard(); });
+document.getElementById('home-player-name').addEventListener('input', e => { nameInputDirty = true; localState.playerName = e.target.value; saveLocalState(); renderLastRoomCard(); });
 document.getElementById('home-room-code').addEventListener('input', e => e.target.value = normalizeRoomCode(e.target.value));
 document.getElementById('home-player-name').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoomByInput(); });
 document.getElementById('home-room-code').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoomByInput(); });
@@ -2618,7 +2633,7 @@ onAuthStateChanged(auth, async user => {
 });
 
 // Init UI
-setPlayerNameInput(localState.playerName || '');
+trySetNameFromStorage();
 setRoomCodeInput(normalizeRoomCode(new URLSearchParams(location.search).get('room') || localState.lastRoomCode || ''));
 renderLastRoomCard();
 setLinkEntryBanner(!!new URLSearchParams(location.search).get('room'));
