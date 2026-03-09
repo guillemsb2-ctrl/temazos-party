@@ -1067,33 +1067,30 @@ textarea:focus { border-color: var(--cyan); }
   line-height: 1.6;
 }
 
-.version-badge {
+.version-badge,
+.lobby-version-badge {
   display: inline-block;
   font-family: 'Space Mono', monospace;
-  font-size: 10px;
   letter-spacing: 2px;
   color: var(--gold);
   background: rgba(255,230,0,.1);
   border: 1px solid rgba(255,230,0,.3);
   border-radius: 100px;
-  padding: 4px 10px;
   text-transform: uppercase;
-  box-shadow: 0 0 10px rgba(255,230,0,.15);
   white-space: nowrap;
+  box-shadow: 0 0 10px rgba(255,230,0,.15);
+}
+.version-badge {
+  font-size: 10px;
+  padding: 4px 10px;
 }
 .lobby-version-badge {
-  display: inline-block;
-  font-family: 'Space Mono', monospace;
   font-size: 9px;
-  letter-spacing: 2px;
-  color: var(--gold);
-  background: rgba(255,230,0,.08);
-  border: 1px solid rgba(255,230,0,.25);
-  border-radius: 100px;
   padding: 3px 8px;
-  white-space: nowrap;
   vertical-align: middle;
   margin-left: 8px;
+  background: rgba(255,230,0,.08);
+  border-color: rgba(255,230,0,.25);
 }
 </style>
 </head>
@@ -1360,6 +1357,7 @@ const serverOffsetRef = ref(db, '.info/serverTimeOffset');
 let SERVER_OFFSET = 0;
 onValue(serverOffsetRef, snap => { SERVER_OFFSET = snap.val() || 0; });
 
+const APP_VERSION = 'v9 — NOVA';
 const LS_KEY = 'temazos_rooms_v1';
 const ROOM_TIMER_MS = 35000;
 const MODES = {
@@ -1863,7 +1861,7 @@ async function createRoom() {
       status: 'lobby',
       mode: modeValue,
       targetScore: mode.targetScore,
-      title: 'TEMAZOS ROOMS v9 NOVA',
+      title: `TEMAZOS ROOMS ${APP_VERSION}`,
       shareUrl: getRoomLink(roomCode),
       activeGenres: localState.selectedGenres,
       tieBreak: false,
