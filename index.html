@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#07070f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>TEMAZOS ROOMS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div id="app">
+    <header class="topbar">
+      <div>
+        <h1 class="logo">TEMAZOS</h1>
+        <p class="logo-sub">rooms · neon music battle</p>
+      </div>
+      <div class="status-pills">
+        <span class="pill" id="auth-pill">Conectando…</span>
+        <span class="pill cyan" id="phase-pill">HOME</span>
+      </div>
+    </header>
+
+    <main id="main-view"></main>
+  </div>
+
+  <template id="home-template">
+    <section class="card hero-card">
+      <div class="card-head">
+        <span class="eyebrow">multiplayer realtime</span>
+        <h2>Crea una sala o únete desde tu móvil</h2>
+        <p>El moderador abre la canción. Todos responden el año desde su propio móvil.</p>
+      </div>
+      <div class="home-grid">
+        <div class="field-block">
+          <label>Tu nombre</label>
+          <input id="home-name" type="text" maxlength="18" placeholder="Escribe tu nombre" />
+        </div>
+        <div class="field-block">
+          <label>Código de sala</label>
+          <input id="home-room-code" type="text" maxlength="16" placeholder="TEMA-4821" autocapitalize="characters" />
+        </div>
+      </div>
+      <div class="button-stack">
+        <button class="btn primary" id="btn-create-room">Crear sala</button>
+        <button class="btn secondary" id="btn-join-room">Unirse a sala</button>
+      </div>
+      <div id="quick-room-slot"></div>
+    </section>
+
+    <section class="card config-card">
+      <div class="card-head compact">
+        <span class="eyebrow">configuración inicial</span>
+        <h3>Modo y listas del moderador</h3>
+      </div>
+      <div class="field-block">
+        <label>Modo</label>
+        <div class="segmented" id="mode-picker"></div>
+      </div>
+      <div class="field-block">
+        <label>Listas activas</label>
+        <div class="chip-wrap" id="genre-picker"></div>
+      </div>
+      <div class="field-note">Puedes cambiar el modo y las listas antes de crear la sala. La IA no decide aquí: queda guardado en Firebase para todos.</div>
+    </section>
+  </template>
+
+  <template id="room-template">
+    <section class="card room-summary">
+      <div class="room-head">
+        <div>
+          <span class="eyebrow">sala activa</span>
+          <h2 id="room-title">TEMAZOS ROOM</h2>
+          <p id="room-subtitle"></p>
+        </div>
+        <div class="room-code-box">
+          <span class="room-code-label">Código</span>
+          <strong id="room-code-display"></strong>
+        </div>
+      </div>
+
+      <div class="summary-grid">
+        <div class="mini-card">
+          <span>Modo</span>
+          <strong id="mode-display"></strong>
+        </div>
+        <div class="mini-card">
+          <span>Objetivo</span>
+          <strong id="target-display"></strong>
+        </div>
+        <div class="mini-card">
+          <span>Ronda</span>
+          <strong id="round-display"></strong>
+        </div>
+        <div class="mini-card">
+          <span>Estado</span>
+          <strong id="status-display"></strong>
+        </div>
+      </div>
+
+      <div class="share-wrap">
+        <div class="share-buttons">
+          <button class="btn secondary" id="btn-share-room">Compartir sala</button>
+          <button class="btn secondary" id="btn-copy-link">Copiar link</button>
+        </div>
+        <div class="share-link-box" id="share-link-box"></div>
+        <div id="qr-box" class="qr-box"></div>
+      </div>
+    </section>
+
+    <section class="grid-two">
+      <div class="card players-card">
+        <div class="card-head compact">
+          <span class="eyebrow">jugadores</span>
+          <h3>Ranking en vivo</h3>
+        </div>
+        <div id="players-list"></div>
+      </div>
+
+      <div class="card player-action-card">
+        <div class="card-head compact">
+          <span class="eyebrow">tu respuesta</span>
+          <h3 id="round-title-display">Esperando partida</h3>
+        </div>
+        <div class="timer-box">
+          <div class="timer-ring">
+            <span id="timer-display">35</span>
+          </div>
+          <p id="timer-hint">El moderador iniciará el temporizador.</p>
+        </div>
+        <div class="answer-box">
+          <input id="guess-input" type="number" inputmode="numeric" min="1900" max="2099" placeholder="Año" />
+          <button class="btn primary" id="btn-submit-guess">Enviar año</button>
+        </div>
+        <div class="helper-line" id="answer-status"></div>
+        <div id="round-reveal-box" class="reveal-box"></div>
+      </div>
+    </section>
+
+    <section id="moderator-panel-slot"></section>
+    <section id="winner-slot"></section>
+  </template>
+
+  <template id="moderator-template">
+    <section class="card moderator-card">
+      <div class="card-head compact">
+        <span class="eyebrow neon">moderador</span>
+        <h3>Panel de control</h3>
+        <p class="muted-text">Solo visible para quien creó la sala o recuperó la moderación.</p>
+      </div>
+
+      <div class="field-block">
+        <label>Listas activas</label>
+        <div class="chip-wrap" id="room-genre-picker"></div>
+      </div>
+      <div class="field-block">
+        <label>Modo</label>
+        <div class="segmented" id="room-mode-picker"></div>
+      </div>
+
+      <div class="button-grid moderator-buttons">
+        <button class="btn primary" id="btn-start-match">Iniciar partida</button>
+        <button class="btn secondary" id="btn-new-round">Nueva ronda</button>
+        <button class="btn secondary" id="btn-open-song">Abrir canción</button>
+        <button class="btn secondary" id="btn-start-timer">Iniciar 35s</button>
+        <button class="btn gold" id="btn-reveal-round">Revelar</button>
+        <button class="btn green" id="btn-next-round">Siguiente</button>
+        <button class="btn secondary" id="btn-reset-match">Nueva partida</button>
+        <button class="btn danger" id="btn-close-room">Cerrar sala</button>
+      </div>
+
+      <div class="song-link-panel" id="song-link-panel"></div>
+
+      <div class="card-head compact top-gap">
+        <span class="eyebrow">ajuste manual</span>
+        <h3>Puntos de la ronda</h3>
+      </div>
+      <div id="adjustments-list"></div>
+    </section>
+  </template>
+
+  <template id="winner-template">
+    <section class="card winner-card">
+      <div class="winner-glow"></div>
+      <span class="eyebrow gold">winner mode</span>
+      <h2 id="winner-name"></h2>
+      <p id="winner-subtitle-text"></p>
+      <div id="winner-ranking"></div>
+    </section>
+  </template>
+
+  <div id="toast"></div>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
