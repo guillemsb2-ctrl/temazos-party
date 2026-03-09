@@ -94,11 +94,111 @@ export function renderMyRooms(myRooms = []) {
   });
 }
 
-export function renderRoom({ room, currentPlayerId, isModerator, remainingSeconds }) {
+/* ── LOBBY VIEW ── */
+
+export function renderLobby({ room, currentPlayerId, isModerator }) {
   const view = document.getElementById('main-view');
-  const tpl = document.getElementById('room-template');
   view.innerHTML = '';
-  view.appendChild(tpl.content.cloneNode(true));
+
+  const meta = room.meta || {};
+  const players = room.players || {};
+  const sortedPlayers = sortPlayers(players);
+  const totalCount = sortedPlayers.length;
+  const connectedCount = sortedPlayers.filter((p) => p.connected).length;
+  const activeGenres = meta.activeGenres || ['pop'];
+  const shareUrl = meta.shareUrl || roomShareUrl(meta.roomCode || '');
+
+  view.innerHTML = `
+    <section class="card room-summary">
+      <div class="room-head">
+        <div>
+          <span class="eyebrow">sala activa</span>
+          <h2>TEMAZOS ROOM</h2>
+          <p class="muted-text">${escapeHtml(shareUrl)}</p>
+        </div>
+        <div class="room-code-box">
+          <span class="room-code-label">Código</span>
+          <strong class="room-code-value">${escapeHtml(meta.roomCode || '----')}</strong>
+        </div>
+      </div>
+
+      <div class="summary-grid">
+        <div class="mini-card"><span>Modo</span><strong>${escapeHtml(MODES[meta.mode]?.label || meta.mode || 'Bala')}</strong></div>
+        <div class="mini-card"><span>Objetivo</span><strong>${String(meta.targetScore || '-')}</strong></div>
+        <div class="mini-card"><span>Jugadores</span><strong>${totalCount}</strong></div>
+        <div class="mini-card"><span>Conectados</span><strong>${connectedCount}</strong></div>
+      </div>
+
+      <div class="share-wrap">
+        <div class="share-buttons">
+          <button class="btn secondary" id="btn-share-room">Compartir sala</button>
+          <button class="btn secondary" id="btn-copy-link">Copiar link</button>
+        </div>
+        <div class="share-link-box">${escapeHtml(shareUrl)}</div>
+        <div id="qr-box" class="qr-box"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head compact">
+        <span class="eyebrow">listas activas</span>
+        <h3>Géneros seleccionados</h3>
+      </div>
+      <div class="chip-wrap lobby-genres-display">
+        ${activeGenres.map((key) => {
+          const g = GENRE_META[key];
+          return g ? `<span class="chip active" data-key="${escapeHtml(key)}">${escapeHtml(g.emoji)} ${escapeHtml(g.label)}</span>` : '';
+        }).join('')}
+      </div>
+    </section>
+
+    <section class="card players-card">
+      <div class="card-head compact">
+        <span class="eyebrow">jugadores</span>
+        <h3>Ranking en vivo (${totalCount})</h3>
+        <p class="players-count-line">${connectedCount} conectado${connectedCount !== 1 ? 's' : ''} de ${totalCount} jugador${totalCount !== 1 ? 'es' : ''}</p>
+      </div>
+      <div id="players-list"></div>
+    </section>
+
+    ${isModerator ? `
+    <section class="card moderator-card lobby-mod-card">
+      <div class="card-head compact">
+        <span class="eyebrow neon">moderador</span>
+        <h3>Acciones</h3>
+      </div>
+      <div class="button-grid moderator-buttons">
+        <button class="btn primary" id="btn-start-match">🎮 Iniciar partida</button>
+        <button class="btn secondary" id="btn-go-config">⚙️ Configuración</button>
+        <button class="btn secondary" id="btn-reset-match">🔄 Nueva partida</button>
+        <button class="btn danger" id="btn-close-room">🚪 Cerrar sala</button>
+      </div>
+    </section>
+    ` : `
+    <section class="card">
+      <div class="card-head compact">
+        <h3>Esperando al moderador…</h3>
+        <p class="helper-line">El moderador iniciará la partida cuando todo esté listo.</p>
+      </div>
+    </section>
+    `}
+  `;
+
+  const playersList = view.querySelector('#players-list');
+  renderPlayersList(playersList, sortedPlayers, currentPlayerId);
+
+  const qrBox = view.querySelector('#qr-box');
+  if (typeof QRCode !== 'undefined' && qrBox) {
+    qrBox.innerHTML = '';
+    new QRCode(qrBox, { text: shareUrl, width: 112, height: 112 });
+  }
+}
+
+/* ── GAME VIEW ── */
+
+export function renderGame({ room, currentPlayerId, isModerator, remainingSeconds }) {
+  const view = document.getElementById('main-view');
+  view.innerHTML = '';
 
   const meta = room.meta || {};
   const round = room.currentRound || {};
@@ -108,78 +208,67 @@ export function renderRoom({ room, currentPlayerId, isModerator, remainingSecond
   const totalCount = sortedPlayers.length;
   const connectedCount = sortedPlayers.filter((p) => p.connected).length;
 
-  document.getElementById('room-title').textContent = meta.isTieBreak ? 'TEMAZOS ROOM · DESEMPATE' : 'TEMAZOS ROOM';
-  document.getElementById('room-subtitle').textContent = meta.shareUrl || roomShareUrl(meta.roomCode || '');
-  document.getElementById('room-code-display').textContent = meta.roomCode || '----';
-  document.getElementById('mode-display').textContent = MODES[meta.mode]?.label || meta.mode || 'Bala';
-  document.getElementById('target-display').textContent = String(meta.targetScore || '-');
-  document.getElementById('round-display').textContent = String(round.roundNumber || 0);
-  document.getElementById('status-display').textContent = statusLabel(meta.status, meta.isTieBreak);
+  view.innerHTML = `
+    <section class="game-status-bar card">
+      <div class="game-status-row">
+        <div class="game-status-item"><span class="eyebrow">sala</span><strong class="game-code">${escapeHtml(meta.roomCode || '')}</strong></div>
+        <div class="game-status-item"><span class="eyebrow">modo</span><strong>${escapeHtml(MODES[meta.mode]?.label || 'Bala')}</strong></div>
+        <div class="game-status-item"><span class="eyebrow">ronda</span><strong>${round.roundNumber || 0}</strong></div>
+        <div class="game-status-item"><span class="eyebrow">estado</span><strong>${escapeHtml(statusLabel(meta.status, meta.isTieBreak))}</strong></div>
+      </div>
+    </section>
+
+    <section class="grid-two">
+      <div class="card players-card">
+        <div class="card-head compact">
+          <span class="eyebrow">jugadores</span>
+          <h3>Ranking (${totalCount})</h3>
+          <p class="players-count-line">${connectedCount} conectado${connectedCount !== 1 ? 's' : ''}</p>
+        </div>
+        <div id="players-list"></div>
+      </div>
+
+      <div class="card player-action-card">
+        <div class="card-head compact">
+          <span class="eyebrow">tu respuesta</span>
+          <h3 id="round-title-display">${round.songTitle
+            ? (['round_revealed', 'match_finished'].includes(meta.status) ? escapeHtml(round.songTitle) : 'Canción cargada')
+            : 'Esperando ronda'}</h3>
+        </div>
+        <div class="timer-box">
+          <div class="timer-ring">
+            <span id="timer-display">${remainingSeconds}</span>
+          </div>
+          <p id="timer-hint">${escapeHtml(timerHint(meta.status))}</p>
+        </div>
+        <div class="answer-box">
+          <input id="guess-input" type="number" inputmode="numeric" min="1900" max="2099" placeholder="Año" />
+          <button class="btn primary" id="btn-submit-guess">Enviar año</button>
+        </div>
+        <div class="helper-line" id="answer-status"></div>
+        <div id="round-reveal-box" class="reveal-box"></div>
+      </div>
+    </section>
+
+    <section id="moderator-panel-slot"></section>
+    <section id="winner-slot"></section>
+  `;
+
   document.getElementById('phase-pill').textContent = statusLabel(meta.status, meta.isTieBreak).toUpperCase();
 
-  const playersHeading = document.getElementById('players-heading');
-  playersHeading.textContent = `Ranking en vivo (${totalCount})`;
-  const playersCountLine = document.getElementById('players-count-line');
-  playersCountLine.textContent = `${connectedCount} conectado${connectedCount !== 1 ? 's' : ''} de ${totalCount} jugador${totalCount !== 1 ? 'es' : ''}`;
+  const playersList = view.querySelector('#players-list');
+  renderPlayersList(playersList, sortedPlayers, currentPlayerId, round);
 
-  const shareBox = document.getElementById('share-link-box');
-  shareBox.textContent = meta.shareUrl || roomShareUrl(meta.roomCode || '');
-
-  const qrBox = document.getElementById('qr-box');
-  if (typeof QRCode !== 'undefined') {
-    const qrUrl = meta.shareUrl || roomShareUrl(meta.roomCode || '');
-    qrBox.innerHTML = '';
-    new QRCode(qrBox, { text: qrUrl, width: 112, height: 112 });
-  }
-
-  const playersList = document.getElementById('players-list');
-  if (!sortedPlayers.length) {
-    playersList.innerHTML = '<p class="muted-text">Aún no hay jugadores. Comparte el enlace para que se unan.</p>';
-  } else {
-    playersList.innerHTML = '';
-    sortedPlayers.forEach((player, index) => {
-      const roundResult = round?.results?.[player.id];
-      const row = document.createElement('div');
-      row.className = `player-row${player.id === currentPlayerId ? ' is-me' : ''}${!player.connected ? ' disconnected' : ''}`;
-      row.innerHTML = `
-        <div class="player-main">
-          <div class="rank-badge${index === 0 && (player.score || 0) > 0 ? ' rank-first' : ''}">${index + 1}</div>
-          <div class="player-name-block">
-            <div class="player-name">
-              ${escapeHtml(player.name || 'Jugador')}
-              ${player.isModerator ? '<span class="moderator-badge">👑 MOD</span>' : ''}
-              ${player.id === currentPlayerId ? '<span class="you-badge">TÚ</span>' : ''}
-            </div>
-            <div class="player-meta">
-              <span class="connected-dot" style="opacity:${player.connected ? 1 : .25}"></span>
-              ${player.connected ? '<span class="connected-text">conectado</span>' : '<span class="disconnected-text">desconectado</span>'}
-              ${roundResult ? ` · ronda ${signed(roundResult.finalPoints || 0)}` : ''}
-            </div>
-          </div>
-        </div>
-        <div class="score-box">${player.score || 0}</div>
-      `;
-      playersList.appendChild(row);
-    });
-  }
-
-  document.getElementById('round-title-display').textContent = round.songTitle
-    ? (meta.status === 'round_revealed' || meta.status === 'match_finished' ? round.songTitle : 'Canción cargada')
-    : 'Esperando ronda';
-  document.getElementById('timer-display').textContent = String(remainingSeconds);
-  document.getElementById('timer-hint').textContent = timerHint(meta.status);
-
-  const answerStatus = document.getElementById('answer-status');
+  const answerStatus = view.querySelector('#answer-status');
   const myAnswer = round.answers?.[currentPlayerId];
   answerStatus.textContent = myAnswer?.locked ? `Tu respuesta: ${myAnswer.guessYear}` : answerHint(meta.status, me, round, currentPlayerId);
 
-  const guessInput = document.getElementById('guess-input');
+  const guessInput = view.querySelector('#guess-input');
   const canAnswer = ['round_ready', 'round_timer_running'].includes(meta.status) && !myAnswer?.locked;
   guessInput.disabled = !canAnswer;
-  document.getElementById('btn-submit-guess').disabled = !canAnswer;
+  view.querySelector('#btn-submit-guess').disabled = !canAnswer;
 
-  const revealBox = document.getElementById('round-reveal-box');
-  revealBox.innerHTML = '';
+  const revealBox = view.querySelector('#round-reveal-box');
   if (['round_revealed', 'match_finished'].includes(meta.status) && round.songTitle) {
     revealBox.innerHTML = `
       <div class="song-title">${escapeHtml(round.songTitle)}</div>
@@ -188,56 +277,77 @@ export function renderRoom({ room, currentPlayerId, isModerator, remainingSecond
     `;
   }
 
-  const moderatorSlot = document.getElementById('moderator-panel-slot');
-  moderatorSlot.innerHTML = '';
   if (isModerator) {
-    const modTpl = document.getElementById('moderator-template');
-    moderatorSlot.appendChild(modTpl.content.cloneNode(true));
-    renderModeratorPanel({ room });
+    const modSlot = view.querySelector('#moderator-panel-slot');
+    renderCompactModeratorPanel(modSlot, { room });
   }
 
-  const winnerSlot = document.getElementById('winner-slot');
-  winnerSlot.innerHTML = '';
+  const winnerSlot = view.querySelector('#winner-slot');
   if (meta.status === 'match_finished') {
-    const winnerTpl = document.getElementById('winner-template');
-    winnerSlot.appendChild(winnerTpl.content.cloneNode(true));
     const leaders = sortPlayers(players);
     const winner = leaders[0];
-    document.getElementById('winner-name').textContent = winner?.name || 'Ganador';
-    document.getElementById('winner-subtitle-text').textContent = meta.isTieBreak ? 'Ganó tras el desempate final.' : 'Ha conquistado la partida.';
-    document.getElementById('winner-ranking').innerHTML = leaders.map((p, i) => `<div class="player-row"><div class="player-main"><div class="rank-badge">${i + 1}</div><div class="player-name-block"><div class="player-name">${escapeHtml(p.name)}</div></div></div><div class="score-box">${p.score || 0}</div></div>`).join('');
+    winnerSlot.innerHTML = `
+      <section class="card winner-card">
+        <div class="winner-glow"></div>
+        <span class="eyebrow gold">winner mode</span>
+        <h2 class="winner-name">${escapeHtml(winner?.name || 'Ganador')}</h2>
+        <p>${escapeHtml(meta.isTieBreak ? 'Ganó tras el desempate final.' : 'Ha conquistado la partida.')}</p>
+        <div class="winner-ranking">${leaders.map((p, i) => `<div class="player-row"><div class="player-main"><div class="rank-badge">${i + 1}</div><div class="player-name-block"><div class="player-name">${escapeHtml(p.name)}</div></div></div><div class="score-box">${p.score || 0}</div></div>`).join('')}</div>
+        <div style="margin-top:16px"><button class="btn secondary" id="btn-back-lobby">Volver al lobby</button></div>
+      </section>
+    `;
   }
 }
 
-export function renderModeratorPanel({ room }) {
+/* ── COMPACT MODERATOR PANEL (game view only) ── */
+
+function renderCompactModeratorPanel(container, { room }) {
   const meta = room.meta || {};
   const round = room.currentRound || {};
 
-  const roomGenrePicker = document.getElementById('room-genre-picker');
-  Object.values(GENRE_META).forEach((genre) => {
-    roomGenrePicker.appendChild(chipButton({ text: `${genre.emoji} ${genre.label}`, active: (meta.activeGenres || []).includes(genre.key), attrs: { 'data-room-genre': genre.key, 'data-key': genre.key } }));
-  });
+  container.innerHTML = `
+    <section class="card moderator-card compact-mod">
+      <div class="card-head compact">
+        <span class="eyebrow neon">moderador</span>
+        <h3>Control de ronda</h3>
+      </div>
 
-  const roomModePicker = document.getElementById('room-mode-picker');
-  Object.values(MODES).forEach((mode) => {
-    roomModePicker.appendChild(segmentButton({ text: `${mode.label} · ${mode.targetScore}`, active: meta.mode === mode.key, attrs: { 'data-room-mode': mode.key } }));
-  });
+      <div class="button-grid moderator-buttons">
+        <button class="btn secondary" id="btn-new-round">Nueva ronda</button>
+        <button class="btn secondary" id="btn-open-song">Abrir canción</button>
+        <button class="btn secondary" id="btn-start-timer">Iniciar 35s</button>
+        <button class="btn gold" id="btn-reveal-round">Revelar</button>
+        <button class="btn green" id="btn-next-round">Siguiente</button>
+        <button class="btn secondary" id="btn-reset-match">Nueva partida</button>
+        <button class="btn danger" id="btn-close-room">Cerrar sala</button>
+        <button class="btn secondary" id="btn-back-lobby-mod">Volver al lobby</button>
+      </div>
 
-  document.getElementById('btn-start-match').disabled = meta.status !== 'lobby';
-  document.getElementById('btn-new-round').disabled = !['round_ready', 'lobby', 'round_revealed'].includes(meta.status);
-  document.getElementById('btn-open-song').disabled = !round.songUrl;
-  document.getElementById('btn-start-timer').disabled = meta.status !== 'round_ready' || !round.songId;
-  document.getElementById('btn-reveal-round').disabled = !['round_ready', 'round_timer_running', 'round_time_up'].includes(meta.status) || !round.songId;
-  document.getElementById('btn-next-round').disabled = meta.status !== 'round_revealed';
+      <div class="song-link-panel" id="song-link-panel"></div>
 
-  const songPanel = document.getElementById('song-link-panel');
+      <div class="card-head compact top-gap">
+        <span class="eyebrow">ajuste manual</span>
+        <h3>Puntos de la ronda</h3>
+      </div>
+      <div id="adjustments-list"></div>
+    </section>
+  `;
+
+  container.querySelector('#btn-new-round').disabled = !['round_ready', 'lobby', 'round_revealed'].includes(meta.status);
+  container.querySelector('#btn-open-song').disabled = !round.songUrl;
+  container.querySelector('#btn-start-timer').disabled = meta.status !== 'round_ready' || !round.songId;
+  container.querySelector('#btn-reveal-round').disabled = !['round_ready', 'round_timer_running', 'round_time_up'].includes(meta.status) || !round.songId;
+  container.querySelector('#btn-next-round').disabled = meta.status !== 'round_revealed';
+
+  const songPanel = container.querySelector('#song-link-panel');
   if (round.songUrl) {
-    songPanel.innerHTML = `<div class="helper-line">Canción cargada:</div><div class="song-url"><a href="${round.songUrl}" target="_blank" rel="noopener noreferrer">${escapeHtml(round.songTitle)}</a></div>`;
+    const safeUrl = safeHref(round.songUrl);
+    songPanel.innerHTML = `<div class="helper-line">Canción cargada:</div><div class="song-url"><a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${escapeHtml(round.songTitle)}</a></div>`;
   } else {
     songPanel.innerHTML = '<div class="helper-line">Aún no hay canción cargada.</div>';
   }
 
-  const adjustmentsList = document.getElementById('adjustments-list');
+  const adjustmentsList = container.querySelector('#adjustments-list');
   const results = round.results || {};
   const players = room.players || {};
   if (!Object.keys(results).length) {
@@ -254,69 +364,48 @@ export function renderModeratorPanel({ room }) {
           <span class="helper-line">Auto ${result.autoPoints || 0} · ajuste ${signed(result.manualAdjustment || 0)} · final ${result.finalPoints || 0}</span>
         </div>
         <div class="adjust-controls">
-          <button class="adjust-btn" data-adjust-player="${playerId}" data-delta="-1">-1</button>
-          <button class="adjust-btn" data-adjust-player="${playerId}" data-delta="1">+1</button>
+          <button class="adjust-btn" data-adjust-player="${escapeHtml(playerId)}" data-delta="-1">-1</button>
+          <button class="adjust-btn" data-adjust-player="${escapeHtml(playerId)}" data-delta="1">+1</button>
         </div>
       `;
       adjustmentsList.appendChild(row);
     });
   }
-
-  renderSongManagement(room);
 }
 
-export function renderSongManagement(room) {
-  const meta = room.meta || {};
-  const activeGenres = meta.activeGenres || ['pop'];
+/* ── SHARED HELPERS ── */
 
-  const songStats = document.getElementById('song-stats');
-  if (songStats) {
-    const builtInSongs = getSongsByGenres(activeGenres);
-    const customSongs = room.customSongs ? Object.values(room.customSongs) : [];
-    const totalSongs = builtInSongs.length + customSongs.length;
-    const usedCount = Object.keys(room.usedSongIds || {}).length;
-
-    songStats.innerHTML = `
-      <div class="song-stats-grid">
-        <div class="mini-card"><span>Total canciones</span><strong>${totalSongs}</strong></div>
-        <div class="mini-card"><span>Ya jugadas</span><strong>${usedCount}</strong></div>
-        <div class="mini-card"><span>Personalizadas</span><strong>${customSongs.length}</strong></div>
-      </div>
-    `;
+function renderPlayersList(container, sortedPlayers, currentPlayerId, round) {
+  if (!container) return;
+  if (!sortedPlayers.length) {
+    container.innerHTML = '<p class="muted-text">Aún no hay jugadores. Comparte el enlace para que se unan.</p>';
+    return;
   }
-
-  const genreSelect = document.getElementById('custom-song-genre');
-  if (genreSelect) {
-    genreSelect.innerHTML = '';
-    Object.values(GENRE_META).forEach((genre) => {
-      const opt = document.createElement('option');
-      opt.value = genre.key;
-      opt.textContent = `${genre.emoji} ${genre.label}`;
-      genreSelect.appendChild(opt);
-    });
-  }
-
-  const customList = document.getElementById('custom-songs-list');
-  if (customList) {
-    const customSongs = room.customSongs ? Object.entries(room.customSongs) : [];
-    if (!customSongs.length) {
-      customList.innerHTML = '<div class="helper-line">No hay canciones personalizadas. Añade canciones usando el formulario de arriba.</div>';
-    } else {
-      customList.innerHTML = '<div class="helper-line" style="margin-bottom:8px">Canciones personalizadas:</div>';
-      customSongs.forEach(([songKey, song]) => {
-        const row = document.createElement('div');
-        row.className = 'custom-song-row-display';
-        row.innerHTML = `
-          <div class="custom-song-info">
-            <span class="custom-song-title">${escapeHtml(song.title)}</span>
-            <span class="custom-song-meta">${song.year} · ${GENRE_META[song.genre]?.emoji || ''} ${GENRE_META[song.genre]?.label || song.genre}</span>
+  container.innerHTML = '';
+  sortedPlayers.forEach((player, index) => {
+    const roundResult = round?.results?.[player.id];
+    const row = document.createElement('div');
+    row.className = `player-row${player.id === currentPlayerId ? ' is-me' : ''}${!player.connected ? ' disconnected' : ''}`;
+    row.innerHTML = `
+      <div class="player-main">
+        <div class="rank-badge${index === 0 && (player.score || 0) > 0 ? ' rank-first' : ''}">${index + 1}</div>
+        <div class="player-name-block">
+          <div class="player-name">
+            ${escapeHtml(player.name || 'Jugador')}
+            ${player.isModerator ? '<span class="moderator-badge">👑 MOD</span>' : ''}
+            ${player.id === currentPlayerId ? '<span class="you-badge">TÚ</span>' : ''}
           </div>
-          <button class="adjust-btn danger-btn" data-remove-song="${escapeHtml(songKey)}">✕</button>
-        `;
-        customList.appendChild(row);
-      });
-    }
-  }
+          <div class="player-meta">
+            <span class="connected-dot" style="opacity:${player.connected ? 1 : .25}"></span>
+            ${player.connected ? '<span class="connected-text">conectado</span>' : '<span class="disconnected-text">desconectado</span>'}
+            ${roundResult ? ` · ronda ${signed(roundResult.finalPoints || 0)}` : ''}
+          </div>
+        </div>
+      </div>
+      <div class="score-box">${player.score || 0}</div>
+    `;
+    container.appendChild(row);
+  });
 }
 
 export function setAuthPill(text) {
@@ -353,4 +442,14 @@ function escapeHtml(value = '') {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+function safeHref(url = '') {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      return escapeHtml(url);
+    }
+  } catch {}
+  return '#';
 }

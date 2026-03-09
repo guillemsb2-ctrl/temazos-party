@@ -1,9 +1,11 @@
-import { ensureAnonymousAuth, db, ref, get } from './firebase-client.js';
-import { renderHome, renderMyRooms, renderRoom, showToast, setAuthPill } from './ui.js';
+import { ensureAnonymousAuth, db, ref, get, set } from './firebase-client.js';
+import { renderHome, renderMyRooms, renderLobby, renderGame, showToast, setAuthPill } from './ui.js';
+import { renderConfigView } from './config-view.js';
 import { GENRE_META } from './songs-data.js';
-import { MODES, safeUpperRoom, readStorage, writeStorage, roomShareUrl, clamp } from './utils.js';
+import { MODES, safeUpperRoom, readStorage, writeStorage, roomShareUrl, clamp, uid } from './utils.js';
 import { createRoom, joinRoom, subscribeRoom, markPresence, leaveRoom, updateRoomSettings, resetScores, closeRoom, addCustomSong, removeCustomSong } from './room-service.js';
 import { startMatch, createNextRound, startTimer, submitGuess, revealRound, nextRoundStep, adjustRoundPoints, forceTimeUp } from './game-service.js';
+import { loadSavedPlaylists, parsePlaylistText } from './playlist-editor.js';
 
 const state = {
   authUser: null,
@@ -16,6 +18,7 @@ const state = {
   roomUnsub: null,
   timerTick: null,
   remainingSeconds: 35,
+  currentView: 'home',
 };
 
 async function boot() {
@@ -27,6 +30,7 @@ async function boot() {
 }
 
 function renderHomeView() {
+  state.currentView = 'home';
   const inviteRoomCode = getRequestedRoomCode();
   renderHome({
     selectedMode: state.selectedMode,
@@ -128,13 +132,135 @@ async function loadMyRooms() {
   });
 }
 
-function bindRoomEvents() {
+/* ── VIEW: LOBBY ── */
+
+function showLobbyView() {
+  state.currentView = 'lobby';
+  document.getElementById('phase-pill').textContent = 'LOBBY';
+  renderLobby({
+    room: state.room,
+    currentPlayerId: state.playerId,
+    isModerator: isModerator(),
+  });
+  bindLobbyEvents();
+}
+
+function bindLobbyEvents() {
+  document.getElementById('btn-share-room')?.addEventListener('click', handleShareRoom);
+  document.getElementById('btn-copy-link')?.addEventListener('click', handleCopyLink);
+
+  if (!isModerator()) return;
+
+  document.getElementById('btn-start-match')?.addEventListener('click', async () => runSafe(async () => {
+    await pushImportedSongsToFirebase();
+    await startMatch(state.roomCode);
+    showToast('Partida iniciada');
+    showGameView();
+  }));
+
+  document.getElementById('btn-go-config')?.addEventListener('click', () => {
+    showConfigView();
+  });
+
+  document.getElementById('btn-reset-match')?.addEventListener('click', async () => runSafe(async () => {
+    await resetScores(state.roomCode, state.room?.players || {});
+    showToast('Sala reiniciada');
+  }));
+
+  document.getElementById('btn-close-room')?.addEventListener('click', async () => runSafe(async () => {
+    await closeRoom(state.roomCode);
+    showToast('Sala cerrada');
+  }));
+}
+
+/* ── VIEW: CONFIG ── */
+
+function showConfigView() {
+  state.currentView = 'config';
+  document.getElementById('phase-pill').textContent = 'CONFIG';
+  const view = document.getElementById('main-view');
+  renderConfigView(view, {
+    room: state.room,
+    roomCode: state.roomCode,
+    onBack: () => showLobbyView(),
+    onSaveSettings: async (patch) => {
+      await runSafe(async () => {
+        await updateRoomSettings(state.roomCode, patch);
+        showToast('Configuración guardada');
+      });
+    },
+    onSaveSongs: async (genreKey, validSongs) => {
+      await runSafe(async () => {
+        await saveSongsToFirebase(genreKey, validSongs);
+        showToast(`${validSongs.length} canciones de ${genreKey} guardadas`);
+      });
+    },
+  });
+}
+
+async function saveSongsToFirebase(genreKey, validSongs) {
+  for (const song of validSongs) {
+    const songKey = uid('song');
+    await set(ref(db, `rooms/${state.roomCode}/customSongs/${songKey}`), {
+      id: songKey,
+      url: song.url,
+      title: song.title,
+      year: Number(song.year),
+      genre: genreKey,
+      addedAt: Date.now(),
+    });
+  }
+}
+
+async function pushImportedSongsToFirebase() {
+  const saved = loadSavedPlaylists(state.roomCode);
+  const existingCustom = state.room?.customSongs ? Object.values(state.room.customSongs) : [];
+  const existingUrls = new Set(existingCustom.map((s) => s.url));
+
+  for (const [genreKey, text] of Object.entries(saved)) {
+    if (!text) continue;
+    const { valid } = parsePlaylistText(text);
+    for (const song of valid) {
+      if (existingUrls.has(song.url)) continue;
+      existingUrls.add(song.url);
+      const songKey = uid('song');
+      await set(ref(db, `rooms/${state.roomCode}/customSongs/${songKey}`), {
+        id: songKey,
+        url: song.url,
+        title: song.title,
+        year: Number(song.year),
+        genre: genreKey,
+        addedAt: Date.now(),
+      });
+    }
+  }
+}
+
+/* ── VIEW: GAME ── */
+
+function showGameView() {
+  state.currentView = 'game';
+  renderGame({
+    room: state.room,
+    currentPlayerId: state.playerId,
+    isModerator: isModerator(),
+    remainingSeconds: computeRemainingSeconds(state.room),
+  });
+  bindGameEvents();
+  watchTimer(state.room);
+}
+
+function bindGameEvents() {
   document.getElementById('btn-submit-guess')?.addEventListener('click', handleSubmitGuess);
   document.getElementById('btn-share-room')?.addEventListener('click', handleShareRoom);
   document.getElementById('btn-copy-link')?.addEventListener('click', handleCopyLink);
   document.getElementById('guess-input')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleSubmitGuess(); });
 
+  document.getElementById('btn-back-lobby')?.addEventListener('click', () => showLobbyView());
+  document.getElementById('btn-back-lobby-mod')?.addEventListener('click', () => showLobbyView());
+
   if (!isModerator()) return;
+
   document.getElementById('btn-start-match')?.addEventListener('click', async () => runSafe(async () => {
     await startMatch(state.roomCode);
     showToast('Partida iniciada');
@@ -167,53 +293,14 @@ function bindRoomEvents() {
     showToast('Sala cerrada');
   }));
 
-  document.querySelectorAll('[data-room-genre]').forEach((button) => {
-    button.addEventListener('click', async () => {
-      const key = button.dataset.roomGenre;
-      let activeGenres = state.room?.meta?.activeGenres || ['pop'];
-      activeGenres = activeGenres.includes(key) ? activeGenres.filter((g) => g !== key) : [...activeGenres, key];
-      if (!activeGenres.length) activeGenres = ['pop'];
-      await updateRoomSettings(state.roomCode, { activeGenres });
-    });
-  });
-  document.querySelectorAll('[data-room-mode]').forEach((button) => {
-    button.addEventListener('click', async () => {
-      const key = button.dataset.roomMode;
-      await updateRoomSettings(state.roomCode, { mode: key, targetScore: MODES[key].targetScore });
-    });
-  });
   document.querySelectorAll('[data-adjust-player]').forEach((button) => {
     button.addEventListener('click', async () => runSafe(async () => {
       await adjustRoundPoints(state.roomCode, button.dataset.adjustPlayer, Number(button.dataset.delta));
     }));
   });
-
-  document.getElementById('btn-add-song')?.addEventListener('click', async () => runSafe(async () => {
-    const urlInput = document.getElementById('custom-song-url');
-    const titleInput = document.getElementById('custom-song-title');
-    const yearInput = document.getElementById('custom-song-year');
-    const genreSelect = document.getElementById('custom-song-genre');
-    const songUrl = (urlInput?.value || '').trim();
-    const songTitle = (titleInput?.value || '').trim();
-    const songYear = Number(yearInput?.value);
-    const songGenre = genreSelect?.value || 'pop';
-    if (!songUrl) return showToast('Introduce una URL');
-    if (!songTitle) return showToast('Introduce el título');
-    if (!songYear || songYear < 1900 || songYear > 2099) return showToast('Introduce un año válido');
-    await addCustomSong(state.roomCode, { url: songUrl, title: songTitle, year: songYear, genre: songGenre });
-    if (urlInput) urlInput.value = '';
-    if (titleInput) titleInput.value = '';
-    if (yearInput) yearInput.value = '';
-    showToast('Canción añadida');
-  }));
-
-  document.querySelectorAll('[data-remove-song]').forEach((button) => {
-    button.addEventListener('click', async () => runSafe(async () => {
-      await removeCustomSong(state.roomCode, button.dataset.removeSong);
-      showToast('Canción eliminada');
-    }));
-  });
 }
+
+/* ── ROOM CONNECTION ── */
 
 async function handleCreateRoom() {
   const playerName = sanitizeName(document.getElementById('home-name').value);
@@ -286,9 +373,18 @@ function connectToRoom(roomCode) {
 
     clearTimeout(renderTimer);
     renderTimer = setTimeout(() => {
-      renderRoom({ room: state.room, currentPlayerId: state.playerId, isModerator: isModerator(), remainingSeconds: computeRemainingSeconds(state.room) });
-      bindRoomEvents();
-      watchTimer(state.room);
+      const status = room?.meta?.status || 'lobby';
+      const isGameActive = ['round_ready', 'round_timer_running', 'round_time_up', 'round_revealed', 'match_finished'].includes(status);
+
+      if (state.currentView === 'config') {
+        return;
+      }
+
+      if (isGameActive) {
+        showGameView();
+      } else {
+        showLobbyView();
+      }
     }, 80);
   });
 }

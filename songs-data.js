@@ -52,8 +52,10 @@ export const GENRE_META = {
   rock: { key: 'rock', label: 'ROCK', emoji: '🎸' },
   hiphop: { key: 'hiphop', label: 'HIP HOP', emoji: '🔥' },
   latino: { key: 'latino', label: 'LATINO', emoji: '🌴' },
-  dance: { key: 'dance', label: 'DANCE', emoji: '💿' },
+  dance: { key: 'dance', label: 'DANCE / ELECTRÓNICA', emoji: '💿' },
   espana: { key: 'espana', label: 'ESPAÑA', emoji: '🇪🇸' },
+  custom1: { key: 'custom1', label: 'CUSTOM 1', emoji: '⭐' },
+  custom2: { key: 'custom2', label: 'CUSTOM 2', emoji: '🎯' },
 };
 
 export function parseSongs(raw, genreKey) {
