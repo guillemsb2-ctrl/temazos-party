@@ -3,7 +3,7 @@ import { renderHome, renderMyRooms, renderLobby, renderGame, showToast, setAuthP
 import { renderConfigView } from './config-view.js';
 import { GENRE_META } from './songs-data.js';
 import { MODES, safeUpperRoom, readStorage, writeStorage, roomShareUrl, clamp, uid } from './utils.js';
-import { createRoom, joinRoom, subscribeRoom, markPresence, leaveRoom, updateRoomSettings, resetScores, closeRoom, addCustomSong, removeCustomSong } from './room-service.js';
+import { createRoom, joinRoom, subscribeRoom, markPresence, leaveRoom, updateRoomSettings, resetScores, closeRoom, addCustomSong, removeCustomSong, removePlayer, renamePlayer } from './room-service.js';
 import { startMatch, createNextRound, startTimer, submitGuess, revealRound, nextRoundStep, adjustRoundPoints, forceTimeUp } from './game-service.js';
 import { loadSavedPlaylists, parsePlaylistText } from './playlist-editor.js';
 
@@ -150,6 +150,8 @@ function bindLobbyEvents() {
   document.getElementById('btn-copy-link')?.addEventListener('click', handleCopyLink);
 
   if (!isModerator()) return;
+
+  bindPlayerManagementEvents();
 
   document.getElementById('btn-start-match')?.addEventListener('click', async () => runSafe(async () => {
     await pushImportedSongsToFirebase();
@@ -469,6 +471,29 @@ function openSongLink() {
     fallbackCopy(songUrl);
     showToast('El navegador bloqueó la apertura. Link copiado.');
   }
+}
+
+function bindPlayerManagementEvents() {
+  document.querySelectorAll('[data-kick-player]').forEach((btn) => {
+    btn.addEventListener('click', async () => runSafe(async () => {
+      const playerId = btn.dataset.kickPlayer;
+      const playerName = btn.dataset.playerName || 'este jugador';
+      if (!confirm(`¿Expulsar a ${playerName} de la sala?`)) return;
+      await removePlayer(state.roomCode, playerId);
+      showToast(`${playerName} expulsado`);
+    }));
+  });
+
+  document.querySelectorAll('[data-rename-player]').forEach((btn) => {
+    btn.addEventListener('click', async () => runSafe(async () => {
+      const playerId = btn.dataset.renamePlayer;
+      const currentName = btn.dataset.currentName || '';
+      const newName = sanitizeName(prompt('Nuevo nombre para el jugador:', currentName));
+      if (!newName) return;
+      await renamePlayer(state.roomCode, playerId, newName);
+      showToast(`Nombre cambiado a ${newName}`);
+    }));
+  });
 }
 
 function isModerator() {

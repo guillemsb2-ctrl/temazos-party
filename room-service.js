@@ -141,6 +141,19 @@ export async function leaveRoom(roomCode, playerId) {
   }
 }
 
+export async function removePlayer(roomCode, playerId) {
+  if (!roomCode || !playerId) return;
+  await remove(ref(db, `rooms/${roomCode}/players/${playerId}`));
+}
+
+export async function renamePlayer(roomCode, playerId, newName) {
+  if (!roomCode || !playerId || !newName) return;
+  const snap = await get(ref(db, `rooms/${roomCode}/players`));
+  const playersMap = snap.val() || {};
+  const safeName = ensureUniqueName(newName, playersMap, playerId);
+  await update(ref(db, `rooms/${roomCode}/players/${playerId}`), { name: safeName });
+}
+
 export async function updateRoomSettings(roomCode, patch = {}) {
   await update(ref(db, `rooms/${roomCode}/meta`), patch);
 }
