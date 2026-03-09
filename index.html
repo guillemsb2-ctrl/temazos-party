@@ -1596,7 +1596,7 @@ function loadLocalState() {
       try {
         const oldData = JSON.parse(localStorage.getItem(OLD_LS_KEY));
         if (oldData) { localStorage.setItem(LS_KEY, JSON.stringify(oldData)); }
-      } catch (_) {}
+      } catch (migErr) { console.warn('Temazos: migration from old key failed', migErr); }
     }
     const raw = localStorage.getItem(LS_KEY);
     const parsed = raw ? JSON.parse(raw) : {};
@@ -2226,8 +2226,13 @@ async function nextRoundStep() {
     results: {}
   };
 
-  await set(ref(db, `rooms/${currentRoomCode}/currentRound`), cleanRound);
-  await set(ref(db, `rooms/${currentRoomCode}/meta/status`), 'round_ready');
+  // Use a single multi-path update so both writes are atomic; the full cleanRound
+  // object at its path is a complete replacement (no merge) because Firebase RTDB
+  // update() replaces entire sub-trees when you supply the leaf-level path.
+  await update(ref(db), {
+    [`rooms/${currentRoomCode}/currentRound`]: cleanRound,
+    [`rooms/${currentRoomCode}/meta/status`]: 'round_ready'
+  });
 
   showToast('➡ Lista para cargar la siguiente ronda');
 }
