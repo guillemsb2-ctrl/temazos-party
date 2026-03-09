@@ -126,9 +126,9 @@ export function renderRoom({ room, currentPlayerId, isModerator, remainingSecond
   shareBox.textContent = meta.shareUrl || roomShareUrl(meta.roomCode || '');
 
   const qrBox = document.getElementById('qr-box');
-  qrBox.innerHTML = '';
   if (typeof QRCode !== 'undefined') {
-    qrInstance = new QRCode(qrBox, { text: meta.shareUrl || roomShareUrl(meta.roomCode || ''), width: 112, height: 112 });
+    const qrUrl = meta.shareUrl || roomShareUrl(meta.roomCode || '');
+    new QRCode(qrBox, { text: qrUrl, width: 112, height: 112 });
   }
 
   const playersList = document.getElementById('players-list');
