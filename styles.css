@@ -22,8 +22,10 @@ html, body {
               var(--bg);
   color: var(--text);
   font-family: 'Space Mono', monospace;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
 }
-body { overflow-x: hidden; }
+body { overflow-x: hidden; padding-bottom: env(safe-area-inset-bottom, 0); }
 .bg-grid {
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
   background-image:
@@ -154,4 +156,212 @@ input:focus { border-color: rgba(0,245,255,.45); box-shadow: 0 0 0 3px rgba(0,24
   .grid-two { grid-template-columns: 1.05fr .95fr; }
   .button-stack, .share-buttons { flex-direction: row; }
   .answer-box { grid-template-columns: 1fr auto; }
+  .song-stats-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* Invite banner */
+.invite-banner {
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, rgba(255,45,120,.18), rgba(0,245,255,.12));
+  border: 1px solid rgba(255,45,120,.35);
+  border-radius: var(--radius);
+  padding: 18px;
+  text-align: center;
+  animation: invite-pulse 2s ease-in-out infinite;
+}
+.invite-banner-inner h2 {
+  font-family: 'Bebas Neue', cursive;
+  font-size: clamp(36px, 9vw, 52px);
+  letter-spacing: 3px;
+  color: var(--cyan);
+  margin: 8px 0 4px;
+  text-shadow: 0 0 18px rgba(0,245,255,.4);
+}
+.invite-banner-inner p {
+  color: var(--muted);
+  margin: 4px 0 0;
+  line-height: 1.6;
+  font-size: 13px;
+}
+@keyframes invite-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(255,45,120,.15); }
+  50% { box-shadow: 0 0 30px rgba(255,45,120,.3), 0 0 60px rgba(0,245,255,.1); }
+}
+
+/* Improved player list */
+.players-count-line {
+  color: var(--cyan);
+  font-size: 12px;
+  margin: 4px 0 8px;
+  letter-spacing: 1px;
+}
+.player-row.is-me {
+  background: rgba(0,245,255,.05);
+  border-radius: 10px;
+  padding: 12px 8px;
+  margin: 0 -8px;
+}
+.player-row.disconnected { opacity: .55; }
+.moderator-badge {
+  display: inline-block;
+  font-size: 11px;
+  color: var(--gold);
+  background: rgba(255,230,0,.12);
+  border: 1px solid rgba(255,230,0,.3);
+  border-radius: 999px;
+  padding: 1px 8px;
+  margin-left: 6px;
+  vertical-align: middle;
+  letter-spacing: 1px;
+  font-weight: 700;
+}
+.you-badge {
+  display: inline-block;
+  font-size: 10px;
+  color: var(--cyan);
+  background: rgba(0,245,255,.1);
+  border: 1px solid rgba(0,245,255,.25);
+  border-radius: 999px;
+  padding: 1px 6px;
+  margin-left: 4px;
+  vertical-align: middle;
+  letter-spacing: 1px;
+}
+.rank-badge.rank-first {
+  background: rgba(255,230,0,.15);
+  border-color: rgba(255,230,0,.4);
+  color: var(--gold);
+}
+.connected-text { color: var(--green); }
+.disconnected-text { color: var(--danger); opacity: .7; }
+
+/* My rooms dashboard */
+.my-rooms-card { border-color: rgba(255,45,120,.2); }
+.my-room-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  gap: 4px 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  align-items: center;
+}
+.my-room-row:last-child { border-bottom: none; }
+.my-room-info { display: flex; align-items: center; gap: 10px; }
+.my-room-code {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 20px;
+  letter-spacing: 2px;
+  color: var(--cyan);
+}
+.my-room-status {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,255,138,.3);
+  background: rgba(0,255,138,.08);
+  color: var(--green);
+}
+.my-room-status.closed {
+  border-color: rgba(255,93,93,.3);
+  background: rgba(255,93,93,.08);
+  color: var(--danger);
+}
+.my-room-players {
+  font-size: 12px;
+  color: var(--muted);
+  text-align: right;
+}
+.my-room-player-names {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.my-room-enter {
+  grid-column: 2;
+  padding: 8px 12px !important;
+  font-size: 16px !important;
+  min-height: auto !important;
+}
+
+/* Song management */
+.song-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 10px 0;
+}
+.custom-song-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  margin-top: 8px;
+}
+.custom-song-row select {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(255,255,255,.04);
+  color: var(--text);
+  padding: 12px 14px;
+  font-size: 14px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.custom-song-row select:focus {
+  border-color: rgba(0,245,255,.45);
+}
+.custom-song-row-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+.custom-song-row-display:last-child { border-bottom: none; }
+.custom-song-info { min-width: 0; }
+.custom-song-title {
+  display: block;
+  font-weight: 700;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.custom-song-meta {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.danger-btn {
+  color: var(--danger) !important;
+  border-color: rgba(255,93,93,.3) !important;
+}
+
+/* iOS specific fixes */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.share-link-box {
+  word-break: break-all;
+  font-size: 12px;
+  padding: 10px 14px;
+  margin-top: 10px;
+  user-select: all;
+  -webkit-user-select: all;
+}
+.btn {
+  -webkit-appearance: none;
+  touch-action: manipulation;
 }

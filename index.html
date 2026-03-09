@@ -31,6 +31,14 @@
   </div>
 
   <template id="home-template">
+    <div id="invite-banner" class="invite-banner" style="display:none">
+      <div class="invite-banner-inner">
+        <span class="eyebrow neon">te han invitado</span>
+        <h2 id="invite-room-code">TEMA-XXXX</h2>
+        <p>Escribe tu nombre y pulsa <strong>Unirse</strong> para entrar a la partida.</p>
+      </div>
+    </div>
+
     <section class="card hero-card">
       <div class="card-head">
         <span class="eyebrow">multiplayer realtime</span>
@@ -40,18 +48,26 @@
       <div class="home-grid">
         <div class="field-block">
           <label>Tu nombre</label>
-          <input id="home-name" type="text" maxlength="18" placeholder="Escribe tu nombre" />
+          <input id="home-name" type="text" maxlength="18" placeholder="Escribe tu nombre" autocomplete="off" autocorrect="off" autocapitalize="words" />
         </div>
         <div class="field-block">
           <label>Código de sala</label>
-          <input id="home-room-code" type="text" maxlength="16" placeholder="TEMA-4821" autocapitalize="characters" />
+          <input id="home-room-code" type="text" maxlength="16" placeholder="TEMA-4821" autocapitalize="characters" autocomplete="off" />
         </div>
       </div>
       <div class="button-stack">
         <button class="btn primary" id="btn-create-room">Crear sala</button>
-        <button class="btn secondary" id="btn-join-room">Unirse a sala</button>
+        <button class="btn primary" id="btn-join-room">Unirse a sala</button>
       </div>
       <div id="quick-room-slot"></div>
+    </section>
+
+    <section id="my-rooms-section" class="card my-rooms-card" style="display:none">
+      <div class="card-head compact">
+        <span class="eyebrow neon">mis salas</span>
+        <h3>Salas creadas</h3>
+      </div>
+      <div id="my-rooms-list"></div>
     </section>
 
     <section class="card config-card">
@@ -118,7 +134,8 @@
       <div class="card players-card">
         <div class="card-head compact">
           <span class="eyebrow">jugadores</span>
-          <h3>Ranking en vivo</h3>
+          <h3 id="players-heading">Ranking en vivo</h3>
+          <p class="players-count-line" id="players-count-line"></p>
         </div>
         <div id="players-list"></div>
       </div>
@@ -182,6 +199,25 @@
         <h3>Puntos de la ronda</h3>
       </div>
       <div id="adjustments-list"></div>
+
+      <div class="card-head compact top-gap">
+        <span class="eyebrow">canciones</span>
+        <h3>Gestión de listas</h3>
+      </div>
+      <div id="song-stats"></div>
+      <div class="field-block">
+        <label>Añadir canción personalizada</label>
+        <input id="custom-song-url" type="url" placeholder="URL de YouTube Music" autocomplete="off" />
+        <div class="custom-song-row">
+          <input id="custom-song-title" type="text" placeholder="Título - Artista" maxlength="80" autocomplete="off" />
+          <input id="custom-song-year" type="number" inputmode="numeric" placeholder="Año" min="1900" max="2099" autocomplete="off" />
+        </div>
+        <div class="custom-song-row">
+          <select id="custom-song-genre"></select>
+          <button class="btn secondary" id="btn-add-song">Añadir</button>
+        </div>
+      </div>
+      <div id="custom-songs-list"></div>
     </section>
   </template>
 
