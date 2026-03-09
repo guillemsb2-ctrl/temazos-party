@@ -128,6 +128,7 @@ export function renderRoom({ room, currentPlayerId, isModerator, remainingSecond
   const qrBox = document.getElementById('qr-box');
   if (typeof QRCode !== 'undefined') {
     const qrUrl = meta.shareUrl || roomShareUrl(meta.roomCode || '');
+    qrBox.innerHTML = '';
     new QRCode(qrBox, { text: qrUrl, width: 112, height: 112 });
   }
 
