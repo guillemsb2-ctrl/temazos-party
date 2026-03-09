@@ -63,6 +63,7 @@ export async function createRoom({ playerName, ownerUid, selectedMode, activeGen
       results: {},
     },
     usedSongIds: {},
+    customSongs: {},
     history: {},
   };
   await set(ref(db, `rooms/${roomCode}`), payload);
@@ -122,14 +123,22 @@ export async function joinRoom({ roomCode, authUid, playerName }) {
 
 export async function markPresence(roomCode, playerId) {
   const playerRef = ref(db, `rooms/${roomCode}/players/${playerId}`);
-  await update(playerRef, { connected: true, lastSeen: serverTimestamp() });
-  const disconnectRef = onDisconnect(playerRef);
-  await disconnectRef.update({ connected: false, lastSeen: serverTimestamp() });
+  try {
+    await update(playerRef, { connected: true, lastSeen: serverTimestamp() });
+    const disconnectRef = onDisconnect(playerRef);
+    await disconnectRef.update({ connected: false, lastSeen: serverTimestamp() });
+  } catch (err) {
+    console.warn('markPresence failed:', err?.message);
+  }
 }
 
 export async function leaveRoom(roomCode, playerId) {
   if (!roomCode || !playerId) return;
-  await update(ref(db, `rooms/${roomCode}/players/${playerId}`), { connected: false });
+  try {
+    await update(ref(db, `rooms/${roomCode}/players/${playerId}`), { connected: false });
+  } catch (err) {
+    console.warn('leaveRoom failed:', err?.message);
+  }
 }
 
 export async function updateRoomSettings(roomCode, patch = {}) {
@@ -164,4 +173,20 @@ export async function closeRoom(roomCode) {
 
 export async function destroyRoom(roomCode) {
   await remove(ref(db, `rooms/${roomCode}`));
+}
+
+export async function addCustomSong(roomCode, { url, title, year, genre }) {
+  const songKey = uid('song');
+  await set(ref(db, `rooms/${roomCode}/customSongs/${songKey}`), {
+    id: songKey,
+    url,
+    title,
+    year: Number(year),
+    genre,
+    addedAt: Date.now(),
+  });
+}
+
+export async function removeCustomSong(roomCode, songKey) {
+  await remove(ref(db, `rooms/${roomCode}/customSongs/${songKey}`));
 }

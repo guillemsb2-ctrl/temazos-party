@@ -43,9 +43,8 @@ export function safeUpperRoom(value = '') {
 }
 
 export function roomShareUrl(roomCode) {
-  const url = new URL(window.location.href);
-  url.searchParams.set('room', roomCode);
-  return url.toString();
+  const base = window.location.origin + window.location.pathname;
+  return `${base}?room=${encodeURIComponent(roomCode)}`;
 }
 
 export function clamp(num, min, max) {

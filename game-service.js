@@ -6,7 +6,18 @@ function pickUnusedSong(room) {
   const activeGenres = room?.meta?.activeGenres || ['pop'];
   const used = room?.usedSongIds || {};
   let pool = getSongsByGenres(activeGenres).filter((song) => !used[song.id]);
-  if (!pool.length) pool = getSongsByGenres(activeGenres);
+
+  const customSongs = room?.customSongs ? Object.values(room.customSongs) : [];
+  const customPool = customSongs.filter((song) =>
+    activeGenres.includes(song.genre) && !used[song.id]
+  );
+  pool = pool.concat(customPool);
+
+  if (!pool.length) {
+    pool = getSongsByGenres(activeGenres);
+    const allCustom = customSongs.filter((song) => activeGenres.includes(song.genre));
+    pool = pool.concat(allCustom);
+  }
   if (!pool.length) throw new Error('No hay canciones disponibles');
   return pool[Math.floor(Math.random() * pool.length)];
 }

@@ -1,8 +1,8 @@
-import { ensureAnonymousAuth } from './firebase-client.js';
-import { renderHome, renderRoom, showToast, setAuthPill } from './ui.js';
+import { ensureAnonymousAuth, db, ref, get } from './firebase-client.js';
+import { renderHome, renderMyRooms, renderRoom, showToast, setAuthPill } from './ui.js';
 import { GENRE_META } from './songs-data.js';
 import { MODES, safeUpperRoom, readStorage, writeStorage, roomShareUrl, clamp } from './utils.js';
-import { createRoom, joinRoom, subscribeRoom, markPresence, leaveRoom, updateRoomSettings, resetScores, closeRoom } from './room-service.js';
+import { createRoom, joinRoom, subscribeRoom, markPresence, leaveRoom, updateRoomSettings, resetScores, closeRoom, addCustomSong, removeCustomSong } from './room-service.js';
 import { startMatch, createNextRound, startTimer, submitGuess, revealRound, nextRoundStep, adjustRoundPoints, forceTimeUp } from './game-service.js';
 
 const state = {
@@ -23,16 +23,34 @@ async function boot() {
   state.authUser = await ensureAnonymousAuth();
   setAuthPill('Firebase OK');
   renderHomeView();
-  autoFillRoomFromUrl();
+  autoJoinFromUrl();
 }
 
 function renderHomeView() {
-  renderHome({ selectedMode: state.selectedMode, selectedGenres: state.selectedGenres, lastRoom: readStorage('temazos.lastRoom', null) });
+  const inviteRoomCode = getRequestedRoomCode();
+  renderHome({
+    selectedMode: state.selectedMode,
+    selectedGenres: state.selectedGenres,
+    lastRoom: readStorage('temazos.lastRoom', null),
+    inviteRoomCode,
+    myRooms: [],
+  });
   document.getElementById('phase-pill').textContent = 'HOME';
 
   const storedName = readStorage('temazos.profile', {}).name || '';
   document.getElementById('home-name').value = storedName;
-  document.getElementById('home-room-code').value = getRequestedRoomCode() || '';
+  document.getElementById('home-room-code').value = inviteRoomCode || '';
+
+  if (inviteRoomCode) {
+    document.getElementById('home-room-code').readOnly = true;
+    const joinBtn = document.getElementById('btn-join-room');
+    if (joinBtn) {
+      joinBtn.textContent = `Unirse a ${inviteRoomCode}`;
+      joinBtn.classList.remove('secondary');
+      joinBtn.classList.add('primary');
+    }
+    document.getElementById('home-name').focus();
+  }
 
   document.getElementById('btn-create-room').addEventListener('click', handleCreateRoom);
   document.getElementById('btn-join-room').addEventListener('click', handleJoinRoom);
@@ -66,11 +84,50 @@ function renderHomeView() {
       const lastRoom = readStorage('temazos.lastRoom', null);
       if (!lastRoom?.roomCode) return;
       document.getElementById('home-room-code').value = lastRoom.roomCode;
+      document.getElementById('home-room-code').readOnly = false;
       if (!document.getElementById('home-name').value && lastRoom.playerName) {
         document.getElementById('home-name').value = lastRoom.playerName;
       }
     });
   }
+
+  loadMyRooms();
+}
+
+async function loadMyRooms() {
+  const myRoomCodes = readStorage('temazos.myRooms', []);
+  if (!myRoomCodes.length) return;
+
+  const myRooms = [];
+  for (const code of myRoomCodes.slice(-10)) {
+    try {
+      const snap = await get(ref(db, `rooms/${code}`));
+      if (snap.exists()) {
+        myRooms.push(snap.val());
+      }
+    } catch (err) {
+      console.warn(`Failed to load room ${code}:`, err?.message);
+    }
+  }
+
+  renderMyRooms(myRooms);
+
+  document.querySelectorAll('[data-room-code]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const code = btn.dataset.roomCode;
+      if (!code) return;
+      const nameInput = document.getElementById('home-name');
+      const codeInput = document.getElementById('home-room-code');
+      if (codeInput) {
+        codeInput.value = code;
+        codeInput.readOnly = false;
+      }
+      if (nameInput && !nameInput.value) {
+        const profile = readStorage('temazos.profile', {});
+        if (profile.name) nameInput.value = profile.name;
+      }
+    });
+  });
 }
 
 function bindRoomEvents() {
@@ -132,6 +189,32 @@ function bindRoomEvents() {
       await adjustRoundPoints(state.roomCode, button.dataset.adjustPlayer, Number(button.dataset.delta));
     }));
   });
+
+  document.getElementById('btn-add-song')?.addEventListener('click', async () => runSafe(async () => {
+    const urlInput = document.getElementById('custom-song-url');
+    const titleInput = document.getElementById('custom-song-title');
+    const yearInput = document.getElementById('custom-song-year');
+    const genreSelect = document.getElementById('custom-song-genre');
+    const songUrl = (urlInput?.value || '').trim();
+    const songTitle = (titleInput?.value || '').trim();
+    const songYear = Number(yearInput?.value);
+    const songGenre = genreSelect?.value || 'pop';
+    if (!songUrl) return showToast('Introduce una URL');
+    if (!songTitle) return showToast('Introduce el título');
+    if (!songYear || songYear < 1900 || songYear > 2099) return showToast('Introduce un año válido');
+    await addCustomSong(state.roomCode, { url: songUrl, title: songTitle, year: songYear, genre: songGenre });
+    if (urlInput) urlInput.value = '';
+    if (titleInput) titleInput.value = '';
+    if (yearInput) yearInput.value = '';
+    showToast('Canción añadida');
+  }));
+
+  document.querySelectorAll('[data-remove-song]').forEach((button) => {
+    button.addEventListener('click', async () => runSafe(async () => {
+      await removeCustomSong(state.roomCode, button.dataset.removeSong);
+      showToast('Canción eliminada');
+    }));
+  });
 }
 
 async function handleCreateRoom() {
@@ -147,6 +230,14 @@ async function handleCreateRoom() {
   state.roomCode = roomCode;
   state.playerId = playerId;
   state.moderatorToken = moderatorToken;
+
+  const myRooms = readStorage('temazos.myRooms', []);
+  if (!myRooms.includes(roomCode)) {
+    myRooms.push(roomCode);
+    if (myRooms.length > 20) myRooms.shift();
+    writeStorage('temazos.myRooms', myRooms);
+  }
+
   connectToRoom(roomCode);
 }
 
@@ -276,10 +367,16 @@ function getRequestedRoomCode() {
   return safeUpperRoom(new URLSearchParams(window.location.search).get('room') || '');
 }
 
-function autoFillRoomFromUrl() {
+function autoJoinFromUrl() {
   const code = getRequestedRoomCode();
+  if (!code) return;
   const input = document.getElementById('home-room-code');
-  if (code && input) input.value = code;
+  if (input) input.value = code;
+
+  const storedName = readStorage('temazos.profile', {}).name || '';
+  if (storedName) {
+    document.getElementById('home-name').value = storedName;
+  }
 }
 
 function clearGuessInput() {
@@ -299,6 +396,14 @@ async function runSafe(fn) {
 function bindVisibilityLeave() {
   window.addEventListener('beforeunload', () => {
     if (state.roomCode && state.playerId) leaveRoom(state.roomCode, state.playerId);
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden' && state.roomCode && state.playerId) {
+      leaveRoom(state.roomCode, state.playerId);
+    }
+    if (document.visibilityState === 'visible' && state.roomCode && state.playerId) {
+      markPresence(state.roomCode, state.playerId);
+    }
   });
 }
 
