@@ -1,0 +1,2599 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#07070f">
+<title>🎵 TEMAZOS ROOMS</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ─── RESET & VARIABLES ─────────────────────────────────────────── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+:root {
+  --bg:      #07070f;
+  --card:    #0e0e1c;
+  --border:  rgba(255,255,255,0.08);
+  --neon:    #ff2d78;
+  --cyan:    #00f5ff;
+  --gold:    #ffe600;
+  --green:   #00ff7a;
+  --purple:  #b36bff;
+  --orange:  #ff8c00;
+  --text:    #f0f0ff;
+  --muted:   #5a5a88;
+  --faded:   rgba(240,240,255,0.06);
+  --r:       8px;
+}
+
+html, body {
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Space Mono', monospace;
+  overflow-x: hidden;
+}
+
+/* Animated background */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background-image:
+    linear-gradient(rgba(0,245,255,0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,245,255,0.035) 1px, transparent 1px);
+  background-size: 44px 44px;
+  animation: gridScroll 25s linear infinite;
+  pointer-events: none;
+}
+body::after {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 40% at 50% 0%,   rgba(255,45,120,0.13) 0%, transparent 70%),
+    radial-gradient(ellipse 80% 30% at 50% 100%,  rgba(0,245,255,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+@keyframes gridScroll { to { background-position: 0 44px; } }
+
+/* ─── LAYOUT ─────────────────────────────────────────────────────── */
+#app {
+  position: relative; z-index: 1;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 16px 14px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ─── HEADER ─────────────────────────────────────────────────────── */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0 2px;
+}
+.logo {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 44px;
+  letter-spacing: 5px;
+  background: linear-gradient(120deg, var(--neon) 0%, var(--cyan) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 18px rgba(255,45,120,0.55));
+  line-height: 1;
+}
+.logo-sub {
+  font-size: 9px;
+  letter-spacing: 4px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-top: 1px;
+}
+.btn-host {
+  background: rgba(255,45,120,0.1);
+  border: 1px solid rgba(255,45,120,0.35);
+  color: var(--neon);
+  border-radius: 100px;
+  padding: 8px 16px;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all .2s;
+  white-space: nowrap;
+}
+.btn-host:active { background: rgba(255,45,120,0.25); }
+
+/* ─── COUNTER BAR ─────────────────────────────────────────────────── */
+.counter-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.counter-pill {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  background: var(--faded);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 5px 12px;
+}
+.counter-pill span { color: var(--cyan); }
+
+/* ─── GENRE SELECTOR ─────────────────────────────────────────────── */
+.genre-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.genre-label {
+  font-size: 9px;
+  letter-spacing: 4px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.genre-pills-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+.genre-pills-wrap::-webkit-scrollbar { display: none; }
+.genre-pills {
+  display: flex;
+  gap: 8px;
+  width: max-content;
+}
+.genre-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  background: var(--faded);
+  color: var(--muted);
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all .2s;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.genre-pill .pill-emoji { font-size: 14px; line-height: 1; }
+.genre-pill:active { transform: scale(.94); }
+
+.genre-pill.active-pop    { border-color: rgba(255,45,120,.6);  background: rgba(255,45,120,.12);  color: var(--neon);   box-shadow: 0 0 12px rgba(255,45,120,.25); }
+.genre-pill.active-rock   { border-color: rgba(0,245,255,.6);   background: rgba(0,245,255,.1);    color: var(--cyan);   box-shadow: 0 0 12px rgba(0,245,255,.2); }
+.genre-pill.active-hiphop { border-color: rgba(255,230,0,.6);   background: rgba(255,230,0,.1);    color: var(--gold);   box-shadow: 0 0 12px rgba(255,230,0,.2); }
+.genre-pill.active-latino { border-color: rgba(0,255,122,.6);   background: rgba(0,255,122,.1);    color: var(--green);  box-shadow: 0 0 12px rgba(0,255,122,.2); }
+.genre-pill.active-dance  { border-color: rgba(179,107,255,.6); background: rgba(179,107,255,.1);  color: var(--purple); box-shadow: 0 0 12px rgba(179,107,255,.2); }
+.genre-pill.active-espana { border-color: rgba(255,140,0,.6);   background: rgba(255,140,0,.1);    color: var(--orange); box-shadow: 0 0 12px rgba(255,140,0,.2); }
+.genre-pill.active-custom { border-color: rgba(255,255,255,.4); background: rgba(255,255,255,.08); color: var(--text);   box-shadow: 0 0 12px rgba(255,255,255,.1); }
+
+.genre-info {
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--muted);
+  font-style: italic;
+}
+.genre-info span { color: var(--cyan); }
+
+/* ─── CARD BASE ─────────────────────────────────────────────────── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  position: relative;
+  overflow: hidden;
+}
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--neon), transparent);
+  opacity: .7;
+}
+
+/* ─── GAME CARD ──────────────────────────────────────────────────── */
+#game-card { padding: 24px 20px 22px; }
+
+.phase-badge {
+  font-size: 9px;
+  letter-spacing: 4px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.phase-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex-shrink: 0;
+  transition: background .3s, box-shadow .3s;
+}
+.phase-dot.playing  { background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 1.4s infinite; }
+.phase-dot.revealed { background: var(--gold);  box-shadow: 0 0 8px var(--gold); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+#song-display {
+  min-height: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+#song-title-text {
+  font-family: 'Bebas Neue', cursive;
+  font-size: clamp(28px, 9vw, 46px);
+  letter-spacing: 2px;
+  line-height: 1.05;
+  background: linear-gradient(135deg,#fff,#c0c0ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  transition: all .4s;
+}
+#song-title-text.hidden-title {
+  background: none;
+  -webkit-text-fill-color: rgba(255,255,255,0.12);
+  letter-spacing: 6px;
+}
+#year-reveal {
+  font-family: 'Bebas Neue', cursive;
+  font-size: clamp(58px, 18vw, 82px);
+  letter-spacing: 4px;
+  color: var(--gold);
+  text-shadow: 0 0 30px rgba(255,230,0,.65), 0 0 70px rgba(255,230,0,.2);
+  line-height: 1;
+  opacity: 0;
+  transform: scale(.7);
+  transition: all .35s cubic-bezier(.34,1.56,.64,1);
+  display: none;
+}
+#year-reveal.show {
+  display: block;
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ─── GAME BUTTONS ──────────────────────────────────────────────── */
+.btn-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.btn-grid-wide { grid-column: 1 / -1; }
+
+.btn {
+  border: none;
+  border-radius: 6px;
+  padding: 14px 10px;
+  font-family: 'Bebas Neue', cursive;
+  font-size: 19px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all .18s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  line-height: 1;
+  white-space: nowrap;
+}
+.btn:disabled { opacity: .35; cursor: default; }
+.btn:active:not(:disabled) { transform: scale(.96); }
+
+.btn-play {
+  background: linear-gradient(135deg, var(--neon), #cc0044);
+  color: #fff;
+  box-shadow: 0 4px 24px rgba(255,45,120,.45);
+  font-size: 22px;
+  padding: 18px;
+}
+.btn-link {
+  background: rgba(0,245,255,.08);
+  border: 1px solid rgba(0,245,255,.3);
+  color: var(--cyan);
+}
+.btn-reveal {
+  background: rgba(255,230,0,.08);
+  border: 1px solid rgba(255,230,0,.35);
+  color: var(--gold);
+}
+.btn-next {
+  background: rgba(0,255,122,.08);
+  border: 1px solid rgba(0,255,122,.3);
+  color: var(--green);
+}
+.btn-copy {
+  background: var(--faded);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 14px;
+  padding: 10px;
+}
+
+/* ─── RANKING CARD ──────────────────────────────────────────────── */
+#ranking-card { padding: 0; }
+
+.ranking-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 18px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.ranking-title {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 26px;
+  letter-spacing: 5px;
+  color: var(--gold);
+  text-shadow: 0 0 15px rgba(255,230,0,.4);
+}
+.ranking-actions { display:flex; gap:8px; flex-wrap:wrap; }
+
+.btn-sm {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  padding: 7px 13px;
+  border-radius: 100px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--faded);
+  color: var(--muted);
+  font-family: 'Space Mono', monospace;
+  transition: all .2s;
+  white-space: nowrap;
+}
+.btn-sm:active { background: rgba(255,255,255,.1); }
+.btn-sm.danger { border-color: rgba(255,45,120,.3); color: var(--neon); }
+
+.add-player-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.add-player-row input {
+  flex: 1;
+  background: var(--faded);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  color: var(--text);
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  outline: none;
+  transition: border-color .2s;
+}
+.add-player-row input:focus { border-color: var(--cyan); }
+.add-player-row input::placeholder { color: var(--muted); }
+.btn-add {
+  background: rgba(0,245,255,.1);
+  border: 1px solid rgba(0,245,255,.3);
+  color: var(--cyan);
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-family: 'Bebas Neue', cursive;
+  font-size: 18px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all .18s;
+  white-space: nowrap;
+}
+.btn-add:active { background: rgba(0,245,255,.2); }
+
+/* ─── ROUND PROGRESS BAR ────────────────────────────────────────── */
+.round-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0,245,255,0.03);
+}
+.round-bar-label {
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--muted);
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.round-bar-track {
+  flex: 1;
+  height: 4px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.round-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cyan), var(--green));
+  border-radius: 2px;
+  transition: width .4s ease;
+  box-shadow: 0 0 8px var(--cyan);
+}
+.round-bar-count {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 18px;
+  color: var(--cyan);
+  letter-spacing: 1px;
+  min-width: 40px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+#players-list { display: flex; flex-direction: column; }
+
+.player-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: background .25s;
+  animation: fadeSlide .3s ease both;
+}
+.player-row:last-child { border-bottom: none; }
+.player-row.scored { background: rgba(0,255,122,0.05); border-bottom-color: rgba(0,255,122,0.08); }
+
+.player-row-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.player-row-bottom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 34px;
+}
+
+@keyframes fadeSlide {
+  from { opacity:0; transform:translateX(-12px); }
+  to   { opacity:1; transform:translateX(0); }
+}
+
+.player-rank {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  font-weight: 700;
+  min-width: 24px;
+  flex-shrink: 0;
+}
+.player-rank.gold   { color: #ffd700; }
+.player-rank.silver { color: #c0c0c0; }
+.player-rank.bronze { color: #cd7f32; }
+
+.player-name {
+  font-size: 13px;
+  letter-spacing: .5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+.player-score {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 30px;
+  letter-spacing: 1px;
+  color: var(--neon);
+  min-width: 38px;
+  text-align: right;
+  text-shadow: 0 0 12px rgba(255,45,120,.4);
+  flex-shrink: 0;
+  transition: color .3s;
+}
+
+.btn-award {
+  width: 38px; height: 38px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--faded);
+  color: var(--muted);
+  font-family: 'Bebas Neue', cursive;
+  font-size: 17px;
+  letter-spacing: 0;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.btn-award[data-pts="3"] { border-color: rgba(255,230,0,.35);  color: var(--gold); }
+.btn-award[data-pts="2"] { border-color: rgba(0,245,255,.3);   color: var(--cyan); }
+.btn-award[data-pts="1"] { border-color: rgba(0,255,122,.3);   color: var(--green); }
+.btn-award:active { transform: scale(.84); }
+.btn-award[data-pts="3"]:active { background: rgba(255,230,0,.15); }
+.btn-award[data-pts="2"]:active { background: rgba(0,245,255,.1); }
+.btn-award[data-pts="1"]:active { background: rgba(0,255,122,.1); }
+
+.scored-pts {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 22px;
+  letter-spacing: 1px;
+  border-radius: 8px;
+  padding: 6px 12px;
+  line-height: 1;
+}
+.scored-pts[data-pts="3"] { background: rgba(255,230,0,.12); color: var(--gold); border: 1px solid rgba(255,230,0,.3); }
+.scored-pts[data-pts="2"] { background: rgba(0,245,255,.1);  color: var(--cyan); border: 1px solid rgba(0,245,255,.25); }
+.scored-pts[data-pts="1"] { background: rgba(0,255,122,.08); color: var(--green); border: 1px solid rgba(0,255,122,.25); }
+.scored-pts[data-pts="0"] { background: rgba(255,255,255,.04); color: var(--muted); border: 1px solid var(--border); }
+.scored-check { font-size: 16px; }
+.btn-undo {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.12);
+  background: transparent;
+  color: var(--muted);
+  font-size: 15px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: all .15s;
+}
+.btn-del-player {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.1);
+  background: transparent;
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: all .15s;
+  margin-left: 2px;
+}
+.btn-del-player:active { border-color: var(--neon); color: var(--neon); background: rgba(255,45,120,.1); }
+
+/* ─── TOAST ─────────────────────────────────────────────────────── */
+#toast {
+  position: fixed;
+  bottom: 28px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: rgba(15,15,28,.95);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 11px 22px;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--text);
+  white-space: nowrap;
+  z-index: 9999;
+  transition: transform .3s cubic-bezier(.34,1.56,.64,1), opacity .3s;
+  opacity: 0;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 40px rgba(0,0,0,.5);
+}
+#toast.show { transform: translateX(-50%) translateY(0); opacity:1; }
+
+/* ─── MODAL BACKDROP ─────────────────────────────────────────────── */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.75);
+  z-index: 100;
+  display: none;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 16px;
+  backdrop-filter: blur(4px);
+}
+.backdrop.open { display: flex; }
+
+/* ─── MODAL ─────────────────────────────────────────────────────── */
+.modal {
+  background: var(--card);
+  border: 1px solid rgba(255,45,120,.25);
+  border-radius: var(--r);
+  width: 100%;
+  max-width: 500px;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.modal-header {
+  position: sticky;
+  top: 0;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 10;
+  flex-shrink: 0;
+}
+.modal-title {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 26px;
+  letter-spacing: 5px;
+  color: var(--neon);
+  text-shadow: 0 0 15px rgba(255,45,120,.4);
+}
+.btn-close {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--faded);
+  color: var(--muted);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .2s; flex-shrink: 0;
+}
+.btn-close:active { border-color: var(--neon); color: var(--neon); }
+
+.modal-body { padding: 20px 18px; display: flex; flex-direction: column; gap: 18px; flex: 1; }
+
+.field-label {
+  font-size: 9px;
+  letter-spacing: 4px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.field-hint {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 8px;
+  font-style: italic;
+}
+
+textarea {
+  width: 100%;
+  min-height: 200px;
+  background: rgba(0,0,0,.3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px;
+  color: var(--text);
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  line-height: 1.7;
+  outline: none;
+  resize: vertical;
+  transition: border-color .2s;
+  -webkit-overflow-scrolling: touch;
+}
+textarea:focus { border-color: var(--cyan); }
+
+.modal-btn-row { display: flex; flex-direction: column; gap: 10px; }
+.btn-save {
+  background: linear-gradient(135deg, var(--neon), #cc0044);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 16px;
+  font-family: 'Bebas Neue', cursive;
+  font-size: 22px;
+  letter-spacing: 3px;
+  cursor: pointer;
+  transition: all .18s;
+  box-shadow: 0 4px 20px rgba(255,45,120,.4);
+}
+.btn-save:active { transform: scale(.97); }
+.btn-reset-used {
+  background: var(--faded);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 13px;
+  font-family: 'Bebas Neue', cursive;
+  font-size: 18px;
+  letter-spacing: 3px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn-reset-used:active { border-color: var(--cyan); color: var(--cyan); }
+
+/* ChatGPT section */
+.chatgpt-box {
+  background: rgba(16,163,127,0.07);
+  border: 1px solid rgba(16,163,127,0.3);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.chatgpt-box-title {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 18px;
+  letter-spacing: 3px;
+  color: #10a37f;
+}
+.chatgpt-box-desc {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.chatgpt-box-desc strong { color: var(--text); }
+.btn-chatgpt {
+  background: #10a37f;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 13px 16px;
+  font-family: 'Bebas Neue', cursive;
+  font-size: 18px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all .18s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 16px rgba(16,163,127,.3);
+}
+.btn-chatgpt:active { transform: scale(.97); background: #0d8a6a; }
+/* Genre tabs in modal */
+.genre-tabs-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  margin-bottom: 14px;
+}
+.genre-tabs-wrap::-webkit-scrollbar { display: none; }
+.genre-tabs {
+  display: flex;
+  gap: 6px;
+  width: max-content;
+  padding-bottom: 2px;
+}
+.genre-tab {
+  padding: 7px 14px;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  background: var(--faded);
+  color: var(--muted);
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all .18s;
+  white-space: nowrap;
+}
+.genre-tab.active {
+  border-color: rgba(255,45,120,.5);
+  background: rgba(255,45,120,.12);
+  color: var(--neon);
+}
+.genre-tab-panel { display: none; }
+.genre-tab-panel.active { display: flex; flex-direction: column; gap: 10px; }
+
+.genre-tab-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.genre-tab-title {
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.genre-tab-count {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--cyan);
+}
+.btn-save-genre {
+  background: linear-gradient(135deg, var(--neon), #cc0044);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 16px;
+  font-family: 'Bebas Neue', cursive;
+  font-size: 18px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all .18s;
+  box-shadow: 0 4px 16px rgba(255,45,120,.35);
+  width: 100%;
+}
+.btn-save-genre:active { transform: scale(.97); }
+.btn-clear-genre {
+  background: var(--faded);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-family: 'Bebas Neue', cursive;
+  font-size: 16px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .18s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.btn-clear-genre:active { border-color: var(--neon); color: var(--neon); }
+
+/* ChatGPT free-text input */
+.chatgpt-genre-input {
+  background: rgba(0,0,0,.3);
+  border: 1px solid rgba(16,163,127,.3);
+  border-radius: 6px;
+  padding: 10px 14px;
+  color: var(--text);
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  outline: none;
+  width: 100%;
+  transition: border-color .2s;
+}
+.chatgpt-genre-input:focus { border-color: #10a37f; }
+.chatgpt-genre-input::placeholder { color: var(--muted); }
+
+.parse-status {
+  font-size: 11px;
+  letter-spacing: 1px;
+  line-height: 1.6;
+  padding: 12px 14px;
+  border-radius: 6px;
+  display: none;
+}
+.parse-status.ok  { display:block; background: rgba(0,255,122,.07); border: 1px solid rgba(0,255,122,.25); color: var(--green); }
+.parse-status.err { display:block; background: rgba(255,45,120,.07); border: 1px solid rgba(255,45,120,.25); color: var(--neon); }
+
+/* README Modal */
+.readme-modal {
+  border-color: rgba(0,245,255,.25);
+}
+.readme-content {
+  font-size: 11px;
+  line-height: 1.9;
+  color: rgba(240,240,255,0.75);
+  letter-spacing: 0.5px;
+}
+.readme-content h3 {
+  font-family: 'Bebas Neue', cursive;
+  font-size: 18px;
+  letter-spacing: 4px;
+  color: var(--cyan);
+  margin: 18px 0 6px;
+}
+.readme-content h3:first-child { margin-top: 0; }
+.readme-content code {
+  background: rgba(0,245,255,.07);
+  border: 1px solid rgba(0,245,255,.15);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  color: var(--cyan);
+}
+.readme-content pre {
+  background: rgba(0,0,0,.4);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  overflow-x: auto;
+  margin: 8px 0;
+  font-size: 10px;
+  line-height: 1.7;
+}
+.readme-content ul { padding-left: 16px; }
+.readme-content li { margin-bottom: 4px; }
+.readme-content .tag {
+  display: inline-block;
+  background: rgba(255,45,120,.12);
+  border: 1px solid rgba(255,45,120,.3);
+  color: var(--neon);
+  border-radius: 4px;
+  padding: 1px 7px;
+  font-size: 9px;
+  letter-spacing: 2px;
+  font-weight: 700;
+  margin-right: 4px;
+}
+.btn-readme {
+  background: rgba(0,245,255,.06);
+  border: 1px solid rgba(0,245,255,.2);
+  color: var(--cyan);
+  border-radius: 100px;
+  padding: 8px 14px;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all .2s;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+.btn-readme:active { background: rgba(0,245,255,.15); }
+
+/* ─── RESPONSIVE ─────────────────────────────────────────────────── */
+@media (max-width: 380px) {
+  .btn { font-size: 17px; padding: 13px 8px; }
+  .btn-play { font-size: 20px; padding: 16px; }
+}
+
+
+/* ─── NEW REALTIME UI ───────────────────────────────────────────── */
+.screen { display:none; }
+.screen.active { display:flex; flex-direction:column; gap:16px; }
+.hero-card { padding:20px; }
+.hero-title {
+  font-family:'Bebas Neue', cursive;
+  font-size:34px;
+  letter-spacing:4px;
+  color:var(--cyan);
+  margin-bottom:8px;
+}
+.hero-text { font-size:12px; line-height:1.7; color:rgba(240,240,255,.82); }
+.stack { display:flex; flex-direction:column; gap:12px; }
+.row { display:flex; gap:10px; }
+.row.wrap { flex-wrap:wrap; }
+.input, select {
+  width:100%;
+  background:rgba(0,0,0,.3);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:14px 14px;
+  color:var(--text);
+  font-family:'Space Mono', monospace;
+  font-size:14px;
+  outline:none;
+}
+.input:focus, select:focus { border-color: var(--cyan); }
+.select-wrap select { appearance:none; }
+.home-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.stat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.stat-box {
+  background:var(--faded); border:1px solid var(--border); border-radius:8px; padding:12px;
+}
+.stat-k { font-size:9px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; }
+.stat-v { font-family:'Bebas Neue', cursive; font-size:28px; letter-spacing:2px; color:var(--text); margin-top:4px; }
+.room-code-big {
+  font-family:'Bebas Neue', cursive; font-size:46px; letter-spacing:4px; color:var(--gold);
+  text-shadow:0 0 20px rgba(255,230,0,.35); line-height:1;
+}
+.subtle { color:var(--muted); font-size:11px; line-height:1.6; }
+.mini-title { font-size:10px; letter-spacing:3px; color:var(--muted); text-transform:uppercase; }
+.badge-row { display:flex; gap:8px; flex-wrap:wrap; }
+.badge {
+  border-radius:100px; padding:7px 12px; border:1px solid var(--border); background:var(--faded);
+  color:var(--text); font-size:10px; letter-spacing:1px;
+}
+.badge.mod { border-color:rgba(255,45,120,.35); color:var(--neon); }
+.badge.ok { border-color:rgba(0,255,122,.3); color:var(--green); }
+.badge.warn { border-color:rgba(255,230,0,.3); color:var(--gold); }
+.player-chip-list { display:flex; flex-direction:column; gap:8px; }
+.player-chip {
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:12px 14px; border:1px solid var(--border); background:var(--faded); border-radius:8px;
+}
+.player-chip-left { display:flex; align-items:center; gap:10px; min-width:0; }
+.player-chip-name { font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.player-dot { width:10px; height:10px; border-radius:50%; background:var(--muted); box-shadow:none; flex-shrink:0; }
+.player-dot.online { background:var(--green); box-shadow:0 0 10px rgba(0,255,122,.5); }
+.player-dot.offline { background:var(--muted); }
+.player-score-small { font-family:'Bebas Neue', cursive; font-size:26px; color:var(--neon); }
+.qr-wrap { display:flex; justify-content:center; padding:14px; background:rgba(255,255,255,.03); border:1px solid var(--border); border-radius:10px; }
+#room-qr canvas, #room-qr img { max-width:100%; height:auto; border-radius:10px; }
+.timer-big {
+  font-family:'Bebas Neue', cursive; font-size:88px; line-height:1; letter-spacing:3px; color:var(--cyan);
+  text-align:center; text-shadow:0 0 24px rgba(0,245,255,.35);
+}
+.answer-box { display:flex; gap:10px; }
+.answer-box .input { flex:1; min-width:0; font-size:26px; text-align:center; font-family:'Bebas Neue', cursive; letter-spacing:2px; }
+.center { text-align:center; }
+.hidden { display:none !important; }
+.control-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.control-grid .btn-grid-wide { grid-column:1 / -1; }
+.result-list { display:flex; flex-direction:column; gap:10px; }
+.result-row {
+  padding:12px 14px; border-radius:8px; border:1px solid var(--border); background:var(--faded);
+  display:flex; flex-direction:column; gap:8px;
+}
+.result-top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.result-name { font-size:13px; }
+.result-meta { font-size:11px; color:var(--muted); }
+.adjust-row { display:flex; gap:8px; align-items:center; }
+.btn-xs {
+  border-radius:7px; border:1px solid var(--border); background:rgba(255,255,255,.04); color:var(--text);
+  font-family:'Bebas Neue', cursive; font-size:18px; padding:8px 12px; cursor:pointer;
+}
+.btn-xs:active { transform:scale(.95); }
+.btn-xs.warn { border-color:rgba(255,230,0,.35); color:var(--gold); }
+.btn-xs.good { border-color:rgba(0,255,122,.3); color:var(--green); }
+.btn-xs.bad { border-color:rgba(255,45,120,.35); color:var(--neon); }
+.final-winner {
+  padding:26px 20px; text-align:center; background:linear-gradient(180deg, rgba(255,230,0,.12), rgba(255,45,120,.08));
+  border:1px solid rgba(255,230,0,.22); border-radius:12px;
+}
+.final-winner .winner-k { font-size:10px; letter-spacing:4px; color:var(--muted); text-transform:uppercase; }
+.final-winner .winner-v { font-family:'Bebas Neue', cursive; font-size:54px; letter-spacing:3px; color:var(--gold); line-height:1; margin-top:10px; }
+.final-winner .winner-score { font-size:16px; color:var(--text); margin-top:8px; }
+.inline-note { font-size:11px; color:var(--muted); line-height:1.6; }
+.small-btn-row { display:flex; gap:8px; flex-wrap:wrap; }
+.kicker { font-size:10px; letter-spacing:4px; color:var(--muted); text-transform:uppercase; }
+#home-genre-pills .genre-pill, #lobby-genre-pills .genre-pill { cursor:pointer; }
+.footer-note { font-size:10px; color:var(--muted); line-height:1.7; text-align:center; }
+@media (max-width:420px){
+  .home-actions, .control-grid { grid-template-columns:1fr; }
+  .stat-grid { grid-template-columns:1fr 1fr 1fr; }
+  .timer-big { font-size:72px; }
+  .room-code-big { font-size:40px; }
+
+#moderator-panel {
+  background: linear-gradient(180deg, rgba(0,245,255,.08), rgba(255,45,120,.08));
+  border: 1px solid rgba(0,245,255,.25);
+  box-shadow: 0 0 24px rgba(0,245,255,.08);
+}
+#moderator-panel::before {
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+}
+.link-entry-banner {
+  padding: 12px 14px;
+  border: 1px solid rgba(0,245,255,.25);
+  background: rgba(0,245,255,.06);
+  border-radius: 8px;
+  color: var(--cyan);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div>
+      <div class="logo">TEMAZOS</div>
+      <div class="logo-sub">rooms · realtime · firebase</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="btn-readme" id="btn-open-readme">📖 DEV</button>
+      <button class="btn-host" id="btn-open-modal">⚙ LISTAS</button>
+    </div>
+  </header>
+
+  <div class="counter-bar">
+    <div class="counter-pill">Auth: <span id="auth-status">...</span></div>
+    <div class="counter-pill">Sala: <span id="top-room-code">—</span></div>
+    <div class="counter-pill">Fase: <span id="top-phase">home</span></div>
+  </div>
+
+  <section id="screen-home" class="screen active">
+    <div class="card hero-card">
+      <div class="hero-title">SALAS ONLINE</div>
+      <div class="hero-text">Crea una sala, comparte link o QR y juega desde varios móviles. El moderador controla la canción y la ronda. Cada jugador responde el año desde su propio móvil.</div>
+    </div>
+
+    <div class="card hero-card">
+      <div class="stack">
+        <div>
+          <div class="field-label">Tu nombre</div>
+          <input class="input" id="home-player-name" maxlength="24" placeholder="Ej: Guillem" autocomplete="nickname" autocapitalize="words">
+        </div>
+        <div>
+          <div class="field-label">Código de sala</div>
+          <input class="input" id="home-room-code" maxlength="16" placeholder="Ej: TEMA-4821" autocapitalize="characters" autocomplete="off">
+          <div class="link-entry-banner hidden" id="link-entry-banner" style="margin-top:10px;">🔗 Has abierto un link de sala. Escribe tu nombre y pulsa <strong>UNIRSE</strong>.</div>
+        </div>
+        <div>
+          <div class="field-label">Modo</div>
+          <select class="input" id="home-mode-select">
+            <option value="bala">Bala · 5 pts</option>
+            <option value="rapida" selected>Rápida · 10 pts</option>
+            <option value="liga">Liga · 20 pts</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card hero-card">
+      <div class="genre-section" style="gap:12px;">
+        <div class="genre-label">🎛 Géneros activos al crear sala</div>
+        <div class="genre-pills-wrap"><div class="genre-pills" id="home-genre-pills"></div></div>
+        <div class="genre-info" id="home-genre-info">Selecciona uno o varios géneros para la sala</div>
+      </div>
+    </div>
+
+    <div class="home-actions">
+      <button class="btn btn-play" id="btn-create-room">➕ CREAR SALA</button>
+      <button class="btn btn-link" id="btn-join-room">↳ UNIRSE</button>
+    </div>
+
+    <div class="card hero-card hidden" id="last-room-card">
+      <div class="field-label">Acceso rápido</div>
+      <div class="row" style="align-items:center;justify-content:space-between;">
+        <div>
+          <div class="room-code-big" id="last-room-code">—</div>
+          <div class="subtle" id="last-room-name">Última sala usada</div>
+        </div>
+        <button class="btn btn-next" id="btn-rejoin-last">REENTRAR</button>
+      </div>
+    </div>
+
+    <div class="footer-note">Safari iPhone y Chrome Android · sin audio sincronizado · el moderador abre YouTube Music manualmente si el navegador lo exige.</div>
+  </section>
+
+  <section id="screen-room" class="screen">
+    <div class="card hero-card">
+      <div class="kicker">Sala</div>
+      <div class="row wrap" style="justify-content:space-between;align-items:flex-start;">
+        <div>
+          <div class="room-code-big" id="room-code-display">—</div>
+          <div class="subtle" id="room-link-display">—</div>
+        </div>
+        <div class="small-btn-row">
+          <button class="btn-sm" id="btn-copy-room-link">📋 Copiar link</button>
+          <button class="btn-sm" id="btn-share-room">📲 Compartir</button>
+          <button class="btn-sm" id="btn-leave-room">↩ Salir</button>
+        </div>
+      </div>
+      <div class="badge-row" style="margin-top:12px;">
+        <div class="badge" id="badge-mode">Modo</div>
+        <div class="badge" id="badge-phase">Estado</div>
+        <div class="badge" id="badge-role">Jugador</div>
+        <div class="badge hidden" id="badge-tiebreak">Desempate</div>
+      </div>
+    </div>
+
+    <div class="card hero-card" id="lobby-share-card">
+      <div class="field-label">Compartir sala</div>
+      <div class="qr-wrap"><div id="room-qr"></div></div>
+      <div class="inline-note center" style="margin-top:10px;">Escanea el QR o abre el link compartido para entrar directamente.</div>
+    </div>
+
+    <div class="card hero-card">
+      <div class="genre-section" style="gap:12px;">
+        <div class="genre-label">Listas activas en la sala</div>
+        <div class="genre-pills-wrap"><div class="genre-pills" id="lobby-genre-pills"></div></div>
+        <div class="genre-info" id="lobby-genre-info">—</div>
+      </div>
+    </div>
+
+    <div class="card hero-card">
+      <div class="stat-grid">
+        <div class="stat-box"><div class="stat-k">Ronda</div><div class="stat-v" id="stat-round">0</div></div>
+        <div class="stat-box"><div class="stat-k">Jugadores</div><div class="stat-v" id="stat-players">0</div></div>
+        <div class="stat-box"><div class="stat-k">Meta</div><div class="stat-v" id="stat-target">10</div></div>
+      </div>
+    </div>
+
+    <div class="card hero-card" id="card-current-round">
+      <div class="phase-badge"><div class="phase-dot" id="phase-dot-live"></div><span id="phase-text-live">LOBBY</span></div>
+      <div id="song-display">
+        <div id="song-title-text-live" class="hidden-title">· · · · · · ·</div>
+        <div id="year-reveal-live"></div>
+      </div>
+      <div class="timer-big" id="timer-display">35</div>
+      <div class="center subtle" id="round-subtext">Esperando al moderador</div>
+      <div class="answer-box" style="margin-top:14px;">
+        <input class="input" id="guess-input" type="number" inputmode="numeric" placeholder="AÑO" min="1900" max="2099">
+        <button class="btn btn-reveal" id="btn-submit-guess">ENVIAR</button>
+      </div>
+      <div class="inline-note center" id="answer-status">Aún no has enviado respuesta.</div>
+    </div>
+
+    <div class="card hero-card hidden" id="moderator-panel">
+      <div class="field-label">Panel moderador</div>
+      <div class="control-grid">
+        <button class="btn btn-next btn-grid-wide" id="btn-start-match">🎬 INICIAR PARTIDA</button>
+        <button class="btn btn-play btn-grid-wide" id="btn-new-round">🎵 NUEVA RONDA</button>
+        <button class="btn btn-link" id="btn-open-song">🔗 ABRIR CANCIÓN</button>
+        <button class="btn btn-link" id="btn-start-timer">⏱ INICIAR 35s</button>
+        <button class="btn btn-reveal" id="btn-reveal-round">👀 REVELAR</button>
+        <button class="btn btn-next" id="btn-next-round">➡ SIGUIENTE</button>
+        <button class="btn btn-link" id="btn-reset-match">♻ REINICIAR</button>
+        <button class="btn btn-copy" id="btn-close-room">🗑 CERRAR SALA</button>
+      </div>
+      <div class="inline-note" style="margin-top:10px;">En iPhone el botón abrir canción debe pulsarse manualmente para evitar bloqueos de autoplay/popups.</div>
+    </div>
+
+    <div class="card hero-card">
+      <div class="ranking-header" style="padding:0 0 12px;border:none;">
+        <div class="ranking-title">🏆 RANKING</div>
+      </div>
+      <div id="players-live-list" class="player-chip-list"></div>
+    </div>
+
+    <div class="card hero-card hidden" id="reveal-card">
+      <div class="field-label">Revelación y ajuste</div>
+      <div class="result-list" id="results-list"></div>
+    </div>
+
+    <div class="card hero-card hidden" id="final-card">
+      <div class="final-winner">
+        <div class="winner-k">Ganador</div>
+        <div class="winner-v" id="winner-name">—</div>
+        <div class="winner-score" id="winner-score">—</div>
+      </div>
+      <div class="result-list" id="final-ranking-list" style="margin-top:14px;"></div>
+      <div class="small-btn-row" style="margin-top:14px;">
+        <button class="btn btn-next" id="btn-rematch">🔁 JUGAR OTRA</button>
+        <button class="btn btn-link" id="btn-back-lobby">↩ VOLVER LOBBY</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- LIST MODAL -->
+<div class="backdrop" id="modal-backdrop">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <div class="modal-title">⚙ LISTAS / HOST</div>
+      <button class="btn-close" id="btn-close-modal">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="chatgpt-box">
+        <div class="chatgpt-box-title">🤖 Generar lista con IA</div>
+        <div class="chatgpt-box-desc">Escribe un género, copia el prompt y pega el resultado en el textarea correspondiente. Se mantiene el formato <strong>URL | AÑO | TÍTULO</strong>.</div>
+        <label class="field-label">Género o subgénero</label>
+        <input type="text" id="chatgpt-genre-input" class="chatgpt-genre-input" placeholder="Ej: Reggaeton 2010-2020, Indie español...">
+        <button class="btn-chatgpt" id="btn-open-chatgpt">COPIAR PROMPT + ABRIR CHATGPT</button>
+        <div class="parse-status" id="chatgpt-status"></div>
+      </div>
+
+      <div>
+        <div class="field-label" style="margin-bottom:12px;">Editar listas por género</div>
+        <div class="field-hint" style="margin-bottom:12px;">Formato exacto: <code style="font-style:normal;background:rgba(0,245,255,.07);border:1px solid rgba(0,245,255,.15);border-radius:3px;padding:1px 5px;font-size:10px;color:var(--cyan);">URL | AÑO | TÍTULO</code></div>
+        <div class="genre-tabs-wrap"><div class="genre-tabs" id="genre-tabs"></div></div>
+        <div id="genre-panels"></div>
+      </div>
+
+      <div class="modal-btn-row"><button class="btn-reset-used" id="btn-reset-local-used">🔄 RESET LISTAS USADAS LOCALES</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- README MODAL -->
+<div class="backdrop" id="readme-backdrop">
+  <div class="modal readme-modal">
+    <div class="modal-header" style="border-color:rgba(0,245,255,.2);">
+      <div class="modal-title" style="color:var(--cyan);">📖 README DEV</div>
+      <button class="btn-close" id="btn-close-readme">✕</button>
+    </div>
+    <div class="modal-body"><div class="readme-content" id="readme-content"></div></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
+import {
+  getAuth,
+  signInAnonymously,
+  onAuthStateChanged
+} from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
+import {
+  getDatabase,
+  ref,
+  set,
+  get,
+  update,
+  onValue,
+  off,
+  serverTimestamp,
+  runTransaction,
+  onDisconnect,
+  remove
+} from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js';
+
+const firebaseConfig = {
+  apiKey: 'AIzaSyAjyC8KjjU_dyaQJ1quIOqwgkUL0AC-L8Y',
+  authDomain: 'temazos-party.firebaseapp.com',
+  databaseURL: 'https://temazos-party-default-rtdb.europe-west1.firebasedatabase.app',
+  projectId: 'temazos-party',
+  storageBucket: 'temazos-party.firebasestorage.app',
+  messagingSenderId: '358194276272',
+  appId: '1:358194276272:web:0a56dfd16681e3ca2d9875'
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+const serverOffsetRef = ref(db, '.info/serverTimeOffset');
+
+let SERVER_OFFSET = 0;
+onValue(serverOffsetRef, snap => { SERVER_OFFSET = snap.val() || 0; });
+
+const LS_KEY = 'temazos_rooms_v1';
+const ROOM_TIMER_MS = 35000;
+const MODES = {
+  bala: { label: 'Bala', targetScore: 5 },
+  rapida: { label: 'Rápida', targetScore: 10 },
+  liga: { label: 'Liga', targetScore: 20 }
+};
+const PHASE_LABELS = {
+  lobby: 'LOBBY',
+  round_ready: 'RONDA LISTA',
+  round_playing: 'SONANDO',
+  round_timer_running: 'RESPONDIENDO',
+  round_time_up: 'TIEMPO AGOTADO',
+  round_revealed: 'REVELADO',
+  match_finished: 'FINAL'
+};
+
+const DEFAULT_LOCAL = {
+  playerName: '',
+  lastRoomCode: '',
+  selectedGenres: ['pop'],
+  customSongs: '',
+  genreSongs: {},
+  playerRooms: {}
+};
+
+const localState = loadLocalState();
+let currentUser = null;
+let currentRoomCode = '';
+let pendingLinkRoomCode = '';
+let roomUnsub = null;
+let roomData = null;
+let timerInterval = null;
+
+const GENRE_LISTS = {
+  pop: {
+    id: 'pop', label: 'POP', emoji: '🎤', colorClass: 'active-pop',
+    songs: `https://music.youtube.com/search?q=Smells+Like+Teen+Spirit+Nirvana | 1991 | Smells Like Teen Spirit - Nirvana
+https://music.youtube.com/search?q=Wonderwall+Oasis | 1995 | Wonderwall - Oasis
+https://music.youtube.com/search?q=Wannabe+Spice+Girls | 1996 | Wannabe - Spice Girls
+https://music.youtube.com/search?q=MMMBop+Hanson | 1997 | MMMBop - Hanson
+https://music.youtube.com/search?q=Everybody+Backstreets+Back+Backstreet+Boys | 1997 | Everybody - Backstreet Boys
+https://music.youtube.com/search?q=My+Heart+Will+Go+On+Celine+Dion | 1997 | My Heart Will Go On - Celine Dion
+https://music.youtube.com/search?q=Baby+One+More+Time+Britney+Spears | 1998 | ...Baby One More Time - Britney Spears
+https://music.youtube.com/search?q=Genie+in+a+Bottle+Christina+Aguilera | 1999 | Genie in a Bottle - Christina Aguilera
+https://music.youtube.com/search?q=Livin+la+Vida+Loca+Ricky+Martin | 1999 | Livin' la Vida Loca - Ricky Martin
+https://music.youtube.com/search?q=Fallin+Alicia+Keys | 2001 | Fallin' - Alicia Keys
+https://music.youtube.com/search?q=Crazy+in+Love+Beyonce | 2003 | Crazy in Love - Beyoncé
+https://music.youtube.com/search?q=Yeah+Usher | 2004 | Yeah! - Usher
+https://music.youtube.com/search?q=Since+U+Been+Gone+Kelly+Clarkson | 2004 | Since U Been Gone - Kelly Clarkson
+https://music.youtube.com/search?q=Hips+Dont+Lie+Shakira | 2006 | Hips Don't Lie - Shakira
+https://music.youtube.com/search?q=Umbrella+Rihanna | 2007 | Umbrella - Rihanna
+https://music.youtube.com/search?q=Single+Ladies+Beyonce | 2008 | Single Ladies - Beyoncé
+https://music.youtube.com/search?q=Just+Dance+Lady+Gaga | 2008 | Just Dance - Lady Gaga
+https://music.youtube.com/search?q=Poker+Face+Lady+Gaga | 2008 | Poker Face - Lady Gaga
+https://music.youtube.com/search?q=TiK+ToK+Kesha | 2009 | TiK ToK - Kesha
+https://music.youtube.com/search?q=Rolling+in+the+Deep+Adele | 2010 | Rolling in the Deep - Adele
+https://music.youtube.com/search?q=Someone+Like+You+Adele | 2011 | Someone Like You - Adele
+https://music.youtube.com/search?q=Somebody+That+I+Used+to+Know+Gotye | 2011 | Somebody That I Used to Know - Gotye
+https://music.youtube.com/search?q=Call+Me+Maybe+Carly+Rae+Jepsen | 2012 | Call Me Maybe - Carly Rae Jepsen
+https://music.youtube.com/search?q=Mirrors+Justin+Timberlake | 2013 | Mirrors - Justin Timberlake
+https://music.youtube.com/search?q=Shake+It+Off+Taylor+Swift | 2014 | Shake It Off - Taylor Swift
+https://music.youtube.com/search?q=Stay+With+Me+Sam+Smith | 2014 | Stay With Me - Sam Smith
+https://music.youtube.com/search?q=Hello+Adele | 2015 | Hello - Adele
+https://music.youtube.com/search?q=Love+Yourself+Justin+Bieber | 2015 | Love Yourself - Justin Bieber
+https://music.youtube.com/search?q=Shape+of+You+Ed+Sheeran | 2017 | Shape of You - Ed Sheeran
+https://music.youtube.com/search?q=Thank+U+Next+Ariana+Grande | 2018 | Thank U, Next - Ariana Grande
+https://music.youtube.com/search?q=Blinding+Lights+The+Weeknd | 2019 | Blinding Lights - The Weeknd
+https://music.youtube.com/search?q=Bad+Guy+Billie+Eilish | 2019 | Bad Guy - Billie Eilish
+https://music.youtube.com/search?q=Watermelon+Sugar+Harry+Styles | 2020 | Watermelon Sugar - Harry Styles
+https://music.youtube.com/search?q=Levitating+Dua+Lipa | 2020 | Levitating - Dua Lipa
+https://music.youtube.com/search?q=drivers+license+Olivia+Rodrigo | 2021 | drivers license - Olivia Rodrigo
+https://music.youtube.com/search?q=As+It+Was+Harry+Styles | 2022 | As It Was - Harry Styles
+https://music.youtube.com/search?q=Anti+Hero+Taylor+Swift | 2022 | Anti-Hero - Taylor Swift
+https://music.youtube.com/search?q=Flowers+Miley+Cyrus | 2023 | Flowers - Miley Cyrus
+https://music.youtube.com/search?q=Vampire+Olivia+Rodrigo | 2023 | Vampire - Olivia Rodrigo
+https://music.youtube.com/search?q=Espresso+Sabrina+Carpenter | 2024 | Espresso - Sabrina Carpenter
+https://music.youtube.com/search?q=Good+Luck+Babe+Chappell+Roan | 2024 | Good Luck, Babe! - Chappell Roan
+https://music.youtube.com/search?q=APT+Rose+Bruno+Mars | 2024 | APT. - ROSÉ & Bruno Mars
+https://music.youtube.com/search?q=Die+With+A+Smile+Lady+Gaga+Bruno+Mars | 2024 | Die With a Smile - Lady Gaga & Bruno Mars`
+  },
+
+  rock: {
+    id: 'rock', label: 'ROCK', emoji: '🎸', colorClass: 'active-rock',
+    songs: `https://music.youtube.com/search?q=Creep+Radiohead | 1992 | Creep - Radiohead
+https://music.youtube.com/search?q=Basket+Case+Green+Day | 1994 | Basket Case - Green Day
+https://music.youtube.com/search?q=You+Oughta+Know+Alanis+Morissette | 1995 | You Oughta Know - Alanis Morissette
+https://music.youtube.com/search?q=Killing+Me+Softly+Fugees | 1996 | Killing Me Softly - Fugees
+https://music.youtube.com/search?q=Torn+Natalie+Imbruglia | 1997 | Torn - Natalie Imbruglia
+https://music.youtube.com/search?q=Beautiful+Day+U2 | 2000 | Beautiful Day - U2
+https://music.youtube.com/search?q=Lose+Yourself+Eminem | 2002 | Lose Yourself - Eminem
+https://music.youtube.com/search?q=In+the+End+Linkin+Park | 2000 | In the End - Linkin Park
+https://music.youtube.com/search?q=Boulevard+of+Broken+Dreams+Green+Day | 2004 | Boulevard of Broken Dreams - Green Day
+https://music.youtube.com/search?q=Welcome+to+the+Black+Parade+My+Chemical+Romance | 2006 | Welcome to the Black Parade - MCR
+https://music.youtube.com/search?q=Seven+Nation+Army+White+Stripes | 2003 | Seven Nation Army - The White Stripes
+https://music.youtube.com/search?q=Mr+Brightside+The+Killers | 2003 | Mr. Brightside - The Killers
+https://music.youtube.com/search?q=Dakota+Stereophonics | 2005 | Dakota - Stereophonics
+https://music.youtube.com/search?q=Chasing+Cars+Snow+Patrol | 2006 | Chasing Cars - Snow Patrol
+https://music.youtube.com/search?q=Fix+You+Coldplay | 2005 | Fix You - Coldplay
+https://music.youtube.com/search?q=The+Scientist+Coldplay | 2002 | The Scientist - Coldplay
+https://music.youtube.com/search?q=Everlong+Foo+Fighters | 1997 | Everlong - Foo Fighters
+https://music.youtube.com/search?q=Best+of+You+Foo+Fighters | 2005 | Best of You - Foo Fighters
+https://music.youtube.com/search?q=Use+Somebody+Kings+of+Leon | 2008 | Use Somebody - Kings of Leon
+https://music.youtube.com/search?q=Somebody+Told+Me+The+Killers | 2004 | Somebody Told Me - The Killers
+https://music.youtube.com/search?q=Knights+of+Cydonia+Muse | 2006 | Knights of Cydonia - Muse
+https://music.youtube.com/search?q=Uprising+Muse | 2009 | Uprising - Muse
+https://music.youtube.com/search?q=Do+I+Wanna+Know+Arctic+Monkeys | 2013 | Do I Wanna Know? - Arctic Monkeys
+https://music.youtube.com/search?q=R+U+Mine+Arctic+Monkeys | 2013 | R U Mine? - Arctic Monkeys
+https://music.youtube.com/search?q=Take+Me+Out+Franz+Ferdinand | 2004 | Take Me Out - Franz Ferdinand
+https://music.youtube.com/search?q=Eye+of+the+Tiger+Survivor | 1982 | Eye of the Tiger - Survivor
+https://music.youtube.com/search?q=Don't+Stop+Believin+Journey | 1981 | Don't Stop Believin' - Journey
+https://music.youtube.com/search?q=Smells+Like+Teen+Spirit+Nirvana | 1991 | Smells Like Teen Spirit - Nirvana
+https://music.youtube.com/search?q=Come+As+You+Are+Nirvana | 1992 | Come As You Are - Nirvana`
+  },
+
+  hiphop: {
+    id: 'hiphop', label: 'HIP-HOP', emoji: '🧢', colorClass: 'active-hiphop',
+    songs: `https://music.youtube.com/search?q=Gangsta+Paradise+Coolio | 1995 | Gangsta's Paradise - Coolio
+https://music.youtube.com/search?q=The+Real+Slim+Shady+Eminem | 2000 | The Real Slim Shady - Eminem
+https://music.youtube.com/search?q=Lose+Yourself+Eminem | 2002 | Lose Yourself - Eminem
+https://music.youtube.com/search?q=In+Da+Club+50+Cent | 2003 | In Da Club - 50 Cent
+https://music.youtube.com/search?q=Yeah+Usher | 2004 | Yeah! - Usher ft. Lil Jon
+https://music.youtube.com/search?q=Gold+Digger+Kanye+West | 2005 | Gold Digger - Kanye West
+https://music.youtube.com/search?q=Stronger+Kanye+West | 2007 | Stronger - Kanye West
+https://music.youtube.com/search?q=Empire+State+of+Mind+Jay+Z+Alicia+Keys | 2009 | Empire State of Mind - Jay-Z ft. Alicia Keys
+https://music.youtube.com/search?q=Thrift+Shop+Macklemore | 2012 | Thrift Shop - Macklemore
+https://music.youtube.com/search?q=Alright+Kendrick+Lamar | 2015 | Alright - Kendrick Lamar
+https://music.youtube.com/search?q=Humble+Kendrick+Lamar | 2017 | HUMBLE. - Kendrick Lamar
+https://music.youtube.com/search?q=rockstar+Post+Malone+21+Savage | 2017 | rockstar - Post Malone ft. 21 Savage
+https://music.youtube.com/search?q=God's+Plan+Drake | 2018 | God's Plan - Drake
+https://music.youtube.com/search?q=Sunflower+Post+Malone+Swae+Lee | 2018 | Sunflower - Post Malone & Swae Lee
+https://music.youtube.com/search?q=Old+Town+Road+Lil+Nas+X | 2019 | Old Town Road - Lil Nas X
+https://music.youtube.com/search?q=Sicko+Mode+Travis+Scott | 2018 | SICKO MODE - Travis Scott
+https://music.youtube.com/search?q=Rap+God+Eminem | 2013 | Rap God - Eminem
+https://music.youtube.com/search?q=MONTERO+Lil+Nas+X | 2021 | MONTERO - Lil Nas X
+https://music.youtube.com/search?q=Industry+Baby+Lil+Nas+X | 2021 | Industry Baby - Lil Nas X
+https://music.youtube.com/search?q=Kill+Bill+SZA | 2022 | Kill Bill - SZA
+https://music.youtube.com/search?q=Rich+Flex+Drake+21+Savage | 2022 | Rich Flex - Drake & 21 Savage
+https://music.youtube.com/search?q=luther+Kendrick+Lamar+SZA | 2024 | luther - Kendrick Lamar & SZA
+https://music.youtube.com/search?q=Not+Like+Us+Kendrick+Lamar | 2024 | Not Like Us - Kendrick Lamar
+https://music.youtube.com/search?q=Waterfalls+TLC | 1994 | Waterfalls - TLC
+https://music.youtube.com/search?q=No+Scrubs+TLC | 1999 | No Scrubs - TLC`
+  },
+
+  latino: {
+    id: 'latino', label: 'LATINO', emoji: '💃', colorClass: 'active-latino',
+    songs: `https://music.youtube.com/search?q=Macarena+Los+del+Rio | 1995 | Macarena - Los del Río
+https://music.youtube.com/search?q=Livin+la+Vida+Loca+Ricky+Martin | 1999 | Livin' la Vida Loca - Ricky Martin
+https://music.youtube.com/search?q=Smooth+Santana+Rob+Thomas | 1999 | Smooth - Santana ft. Rob Thomas
+https://music.youtube.com/search?q=Hips+Dont+Lie+Shakira | 2006 | Hips Don't Lie - Shakira
+https://music.youtube.com/search?q=Waka+Waka+Shakira | 2010 | Waka Waka - Shakira
+https://music.youtube.com/search?q=Despacito+Luis+Fonsi+Daddy+Yankee | 2017 | Despacito - Luis Fonsi ft. Daddy Yankee
+https://music.youtube.com/search?q=Mi+Gente+J+Balvin+Willy+William | 2017 | Mi Gente - J Balvin & Willy William
+https://music.youtube.com/search?q=MIA+Bad+Bunny+Drake | 2018 | MIA - Bad Bunny ft. Drake
+https://music.youtube.com/search?q=Con+Calma+Daddy+Yankee+Snow | 2019 | Con Calma - Daddy Yankee & Snow
+https://music.youtube.com/search?q=Tusa+Karol+G+Nicki+Minaj | 2019 | TUSA - KAROL G ft. Nicki Minaj
+https://music.youtube.com/search?q=Hawai+Maluma | 2020 | Hawái - Maluma
+https://music.youtube.com/search?q=Dynamite+BTS | 2020 | Dynamite - BTS
+https://music.youtube.com/search?q=Dakiti+Bad+Bunny+Jhay+Cortez | 2020 | DÁKITI - Bad Bunny & Jhay Cortez
+https://music.youtube.com/search?q=Pepas+Farruko | 2021 | Pepas - Farruko
+https://music.youtube.com/search?q=Titi+Me+Pregunto+Bad+Bunny | 2022 | Tití Me Preguntó - Bad Bunny
+https://music.youtube.com/search?q=Shakira+BZRP+Music+Sessions+53 | 2023 | Shakira: Bzrp Music Sessions #53
+https://music.youtube.com/search?q=Ella+Baila+Sola+Eslabon+Armado+Peso+Pluma | 2023 | Ella Baila Sola - Eslabon Armado & Peso Pluma
+https://music.youtube.com/search?q=Quevedo+Bzrp+Music+Sessions+52 | 2022 | Quevedo: Bzrp Music Sessions #52
+https://music.youtube.com/search?q=La+Bachata+Manuel+Turizo | 2022 | La Bachata - Manuel Turizo
+https://music.youtube.com/search?q=Cayó+La+Noche+Ozuna | 2020 | Cayó La Noche - Ozuna
+https://music.youtube.com/search?q=Reggaeton+Lento+CNCO | 2016 | Reggaetón Lento - CNCO
+https://music.youtube.com/search?q=Te+Boté+Casper+Nio+Garcia+Darell+Nicky+Jam | 2018 | Te Boté - Casper ft. Nio García, Darell, Nicky Jam
+https://music.youtube.com/search?q=Lean+On+Major+Lazer+MO | 2015 | Lean On - Major Lazer & MØ`
+  },
+
+  dance: {
+    id: 'dance', label: 'DANCE', emoji: '🎹', colorClass: 'active-dance',
+    songs: `https://music.youtube.com/search?q=All+That+She+Wants+Ace+of+Base | 1993 | All That She Wants - Ace of Base
+https://music.youtube.com/search?q=The+Sign+Ace+of+Base | 1993 | The Sign - Ace of Base
+https://music.youtube.com/search?q=I+Gotta+Feeling+Black+Eyed+Peas | 2009 | I Gotta Feeling - Black Eyed Peas
+https://music.youtube.com/search?q=We+Found+Love+Rihanna+Calvin+Harris | 2011 | We Found Love - Rihanna
+https://music.youtube.com/search?q=Party+Rock+Anthem+LMFAO | 2011 | Party Rock Anthem - LMFAO
+https://music.youtube.com/search?q=Gangnam+Style+PSY | 2012 | Gangnam Style - PSY
+https://music.youtube.com/search?q=Get+Lucky+Daft+Punk+Pharrell | 2013 | Get Lucky - Daft Punk ft. Pharrell
+https://music.youtube.com/search?q=Happy+Pharrell+Williams | 2013 | Happy - Pharrell Williams
+https://music.youtube.com/search?q=Uptown+Funk+Mark+Ronson+Bruno+Mars | 2014 | Uptown Funk - Mark Ronson ft. Bruno Mars
+https://music.youtube.com/search?q=Lean+On+Major+Lazer+MO | 2015 | Lean On - Major Lazer & MØ
+https://music.youtube.com/search?q=Closer+The+Chainsmokers | 2016 | Closer - The Chainsmokers
+https://music.youtube.com/search?q=Cheap+Thrills+Sia | 2016 | Cheap Thrills - Sia
+https://music.youtube.com/search?q=One+Dance+Drake | 2016 | One Dance - Drake
+https://music.youtube.com/search?q=Rockstar+Avicii | 2015 | Wake Me Up - Avicii
+https://music.youtube.com/search?q=Levels+Avicii | 2011 | Levels - Avicii
+https://music.youtube.com/search?q=Titanium+David+Guetta+Sia | 2011 | Titanium - David Guetta ft. Sia
+https://music.youtube.com/search?q=Animals+Martin+Garrix | 2013 | Animals - Martin Garrix
+https://music.youtube.com/search?q=Stay+The+Night+Zedd+Hayley+Williams | 2013 | Stay the Night - Zedd ft. Hayley Williams
+https://music.youtube.com/search?q=Dont+You+Worry+Child+Swedish+House+Mafia | 2012 | Don't You Worry Child - Swedish House Mafia
+https://music.youtube.com/search?q=Dynamite+Taio+Cruz | 2010 | Dynamite - Taio Cruz
+https://music.youtube.com/search?q=We+Are+Young+fun | 2011 | We Are Young - fun.
+https://music.youtube.com/search?q=Dance+Monkey+Tones+and+I | 2019 | Dance Monkey - Tones and I
+https://music.youtube.com/search?q=Blinding+Lights+The+Weeknd | 2019 | Blinding Lights - The Weeknd`
+  },
+
+  espana: {
+    id: 'espana', label: 'ESPAÑA', emoji: '🇪🇸', colorClass: 'active-espana',
+    songs: `https://music.youtube.com/search?q=A+Quién+Le+Importa+Alaska+Dinarama | 1986 | A Quién Le Importa - Alaska y Dinarama
+https://music.youtube.com/search?q=Hijo+de+la+Luna+Mecano | 1986 | Hijo de la Luna - Mecano
+https://music.youtube.com/search?q=El+Canto+del+Loco+La+Suerte+De+Mi+Vida | 2003 | Puede Ser - El Canto del Loco
+https://music.youtube.com/search?q=Ella+Bebe+Juanes | 2000 | Es Por Ti - Juanes
+https://music.youtube.com/search?q=Cachito+Nacha+Pop | 1982 | Cachito - Nacha Pop
+https://music.youtube.com/search?q=Me+Cuesta+Tanto+Olvidarte+Mecano | 1988 | Me Cuesta Tanto Olvidarte - Mecano
+https://music.youtube.com/search?q=En+El+Muelle+de+San+Blas+Mana | 1992 | En el Muelle de San Blás - Maná
+https://music.youtube.com/search?q=Quiero+ser+Santa+Ojos+de+Brujo | 2002 | Quiero Ser - Ojos de Brujo
+https://music.youtube.com/search?q=Devuelveme+a+mi+chica+Hombres+G | 1985 | Devuélveme a mi chica - Hombres G
+https://music.youtube.com/search?q=El+Sitio+de+mi+Recreo+Antonio+Flores | 1992 | El sitio de mi recreo - Antonio Flores
+https://music.youtube.com/search?q=Sin+Ti+No+Soy+Nada+Rozalén | 2014 | Sin Ti No Soy Nada - Rozalén
+https://music.youtube.com/search?q=Malamente+Rosalia | 2017 | Malamente - Rosalía
+https://music.youtube.com/search?q=Con+Altura+Rosalia+J+Balvin | 2019 | Con Altura - Rosalía ft. J Balvin
+https://music.youtube.com/search?q=Despecha+Rosalia | 2022 | DESPECHÁ - Rosalía
+https://music.youtube.com/search?q=Patria+y+Vida+Yotuel | 2021 | Patria y Vida - Yotuel
+https://music.youtube.com/search?q=Kesi+Camilo | 2021 | KESI - Camilo
+https://music.youtube.com/search?q=Como+siempre+Funambulista | 2008 | Como siempre - Funambulista
+https://music.youtube.com/search?q=Arde+Vetusta+Morla | 2014 | Arde - Vetusta Morla
+https://music.youtube.com/search?q=Copla+del+Olvido+El+Kanka | 2011 | La Copla del Olvido - El Kanka
+https://music.youtube.com/search?q=Flaca+Andrés+Calamaro | 1997 | Flaca - Andrés Calamaro
+https://music.youtube.com/search?q=La+Reina+de+la+Noche+Raphael | 1969 | Mi Gran Noche - Raphael
+https://music.youtube.com/search?q=Deprisa+Deprisa+Maldita+Nerea | 2009 | El Secreto de las Tortugas - Maldita Nerea
+https://music.youtube.com/search?q=Mil+Noches+Marc+Segui | 2022 | Mil Noches - Marc Seguí`
+  }
+};
+
+function loadLocalState() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    const merged = { ...DEFAULT_LOCAL, ...parsed };
+    merged.genreSongs = merged.genreSongs || {};
+    merged.playerRooms = merged.playerRooms || {};
+    Object.keys(merged.genreSongs).forEach(id => { if (GENRE_LISTS[id]) GENRE_LISTS[id].songs = merged.genreSongs[id]; });
+    return merged;
+  } catch (e) {
+    return JSON.parse(JSON.stringify(DEFAULT_LOCAL));
+  }
+}
+function saveLocalState() {
+  localStorage.setItem(LS_KEY, JSON.stringify(localState));
+}
+function nowServer() { return Date.now() + SERVER_OFFSET; }
+function esc(str='') { return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(showToast.t);
+  showToast.t = setTimeout(() => el.classList.remove('show'), 2600);
+}
+function normalizeRoomCode(value='') {
+  return value.toUpperCase().replace(/\s+/g,'').replace(/[^A-Z0-9-]/g,'');
+}
+function getPlayerNameInput() {
+  return (document.getElementById('home-player-name').value || '').trim();
+}
+function setPlayerNameInput(name='') { document.getElementById('home-player-name').value = name; }
+function setRoomCodeInput(code='') { document.getElementById('home-room-code').value = code; }
+function setLinkEntryBanner(visible=false) {
+  document.getElementById('link-entry-banner').classList.toggle('hidden', !visible);
+}
+async function copyTextFallback(text) {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch (e) {}
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    ta.remove();
+    return !!ok;
+  } catch (e) {
+    return false;
+  }
+}
+function switchScreen(id) {
+  document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('top-phase').textContent = id.replace('screen-','');
+}
+function updateTopBar() {
+  document.getElementById('top-room-code').textContent = roomData?.meta?.roomCode || currentRoomCode || '—';
+  document.getElementById('auth-status').textContent = currentUser ? 'ok' : '...';
+}
+function buildHomeGenrePills() {
+  const wrap = document.getElementById('home-genre-pills');
+  wrap.innerHTML = '';
+  for (const genre of Object.values(GENRE_LISTS)) {
+    const pill = document.createElement('div');
+    pill.className = 'genre-pill';
+    pill.dataset.genre = genre.id;
+    pill.innerHTML = `<span class="pill-emoji">${genre.emoji}</span>${genre.label}`;
+    pill.addEventListener('click', () => toggleHomeGenre(genre.id));
+    wrap.appendChild(pill);
+  }
+  updateHomeGenrePills();
+}
+function updateHomeGenrePills() {
+  const ids = localState.selectedGenres;
+  document.querySelectorAll('#home-genre-pills .genre-pill').forEach(el => {
+    const genre = GENRE_LISTS[el.dataset.genre];
+    el.classList.toggle(genre.colorClass, ids.includes(genre.id));
+  });
+  const total = compileSongPoolFromLocal().songs.length;
+  const names = ids.map(id => `${GENRE_LISTS[id].emoji} ${GENRE_LISTS[id].label}`).join(' + ');
+  document.getElementById('home-genre-info').innerHTML = `${names} → <span>${total} canciones</span> disponibles`;
+}
+function toggleHomeGenre(id) {
+  const arr = localState.selectedGenres;
+  const idx = arr.indexOf(id);
+  if (idx === -1) arr.push(id);
+  else { if (arr.length === 1) return showToast('⚠ Debes dejar al menos un género'); arr.splice(idx,1); }
+  saveLocalState();
+  updateHomeGenrePills();
+}
+function parseSongs(text='') {
+  return text.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#')).map((line, i) => {
+    const parts = line.split('|').map(s => s.trim());
+    const url = parts[0] || '';
+    const year = parseInt(parts[1], 10);
+    const title = parts[2] || '';
+    if (!url || Number.isNaN(year)) return null;
+    return { id: `s-${i}`, url, year, title };
+  }).filter(Boolean);
+}
+function compileSongPoolFromTexts(genreTexts, activeGenres) {
+  const seen = new Set();
+  const songs = [];
+  activeGenres.forEach(id => {
+    const parsed = parseSongs(genreTexts[id] || '');
+    parsed.forEach(song => {
+      const uniqueKey = extractSongKey(song.url, song.title, song.year);
+      if (seen.has(uniqueKey)) return;
+      seen.add(uniqueKey);
+      songs.push({ ...song, id: uniqueKey });
+    });
+  });
+  return songs;
+}
+function compileSongPoolFromLocal() {
+  const genreTexts = {};
+  localState.selectedGenres.forEach(id => {
+    genreTexts[id] = localState.genreSongs[id] || GENRE_LISTS[id]?.songs || '';
+  });
+  return { genreTexts, songs: compileSongPoolFromTexts(genreTexts, localState.selectedGenres) };
+}
+function extractSongKey(url='', title='', year='') {
+  const q = (url.split('q=')[1] || url).split('&')[0];
+  return `${decodeURIComponent(q).toLowerCase()}__${year}__${title.toLowerCase()}`.replace(/[^a-z0-9_]+/gi,'_');
+}
+function calculatePoints(guessYear, correctYear) {
+  if (!Number.isFinite(guessYear) || !Number.isFinite(correctYear)) return 0;
+  const diff = Math.abs(guessYear - correctYear);
+  if (diff === 0) return 3;
+  if (diff === 1) return 2;
+  if (diff === 2 || diff === 3) return 1;
+  return 0;
+}
+function buildGenreTabsModal() {
+  const tabs = document.getElementById('genre-tabs');
+  const panels = document.getElementById('genre-panels');
+  tabs.innerHTML = '';
+  panels.innerHTML = '';
+  Object.values(GENRE_LISTS).forEach((genre, index) => {
+    const tab = document.createElement('div');
+    tab.className = 'genre-tab' + (index===0 ? ' active' : '');
+    tab.dataset.tab = genre.id;
+    tab.textContent = `${genre.emoji} ${genre.label}`;
+    tab.addEventListener('click', () => openGenreTab(genre.id));
+    tabs.appendChild(tab);
+
+    const panel = document.createElement('div');
+    panel.className = 'genre-tab-panel' + (index===0 ? ' active' : '');
+    panel.id = `genre-panel-${genre.id}`;
+    panel.innerHTML = `
+      <div class="genre-tab-header">
+        <span class="genre-tab-title">${genre.emoji} Lista ${genre.label}</span>
+        <span class="genre-tab-count" id="count-${genre.id}">—</span>
+      </div>
+      <textarea id="textarea-${genre.id}" spellcheck="false" style="min-height:180px;" placeholder="URL | AÑO | TÍTULO…"></textarea>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-save-genre" style="flex:1" data-save-genre="${genre.id}">💾 GUARDAR ${genre.label}</button>
+        <button class="btn-clear-genre" data-clear-genre="${genre.id}">🗑 CLEAR</button>
+      </div>
+      <div class="parse-status" id="status-${genre.id}"></div>`;
+    panels.appendChild(panel);
+  });
+  panels.addEventListener('click', (e) => {
+    const saveId = e.target.closest('[data-save-genre]')?.dataset.saveGenre;
+    const clearId = e.target.closest('[data-clear-genre]')?.dataset.clearGenre;
+    if (saveId) saveGenreList(saveId);
+    if (clearId) clearGenreTextarea(clearId);
+  });
+  Object.values(GENRE_LISTS).forEach(genre => {
+    const ta = document.getElementById(`textarea-${genre.id}`);
+    ta.value = localState.genreSongs[genre.id] || genre.songs || '';
+    ta.addEventListener('input', () => updateGenreCount(genre.id));
+    updateGenreCount(genre.id);
+  });
+}
+function openGenreTab(id) {
+  document.querySelectorAll('.genre-tab').forEach(el => el.classList.toggle('active', el.dataset.tab===id));
+  document.querySelectorAll('.genre-tab-panel').forEach(el => el.classList.toggle('active', el.id===`genre-panel-${id}`));
+}
+function updateGenreCount(id) {
+  const ta = document.getElementById(`textarea-${id}`);
+  const el = document.getElementById(`count-${id}`);
+  if (!ta || !el) return;
+  el.textContent = `${parseSongs(ta.value).length} canciones`;
+}
+function clearGenreTextarea(id) {
+  const ta = document.getElementById(`textarea-${id}`);
+  if (!ta) return;
+  ta.value = '';
+  updateGenreCount(id);
+}
+function saveGenreList(id) {
+  const ta = document.getElementById(`textarea-${id}`);
+  const status = document.getElementById(`status-${id}`);
+  const songs = parseSongs(ta.value);
+  if (!songs.length) {
+    status.className = 'parse-status err';
+    status.textContent = '❌ No se encontraron canciones válidas';
+    return;
+  }
+  localState.genreSongs[id] = ta.value;
+  GENRE_LISTS[id].songs = ta.value;
+  saveLocalState();
+  updateHomeGenrePills();
+  updateGenreCount(id);
+  status.className = 'parse-status ok';
+  status.textContent = `✅ ${songs.length} canciones guardadas en ${GENRE_LISTS[id].label}.`;
+  setTimeout(() => status.className = 'parse-status', 3000);
+  showToast(`✅ Lista ${GENRE_LISTS[id].label} guardada`);
+}
+function getChatGPTPrompt(genre) {
+  return `Genera exactamente 30 canciones muy conocidas del género "${genre}" para un juego de adivinar el año.
+
+FORMATO EXACTO (una por línea):
+https://music.youtube.com/search?q=TITULO+ARTISTA | AÑO | Título - Artista
+
+REGLAS:
+- Solo canciones reales
+- Año de lanzamiento correcto
+- Nada de numeración
+- Nada de texto extra
+- Usa music.youtube.com/search?q=...
+- Reemplaza espacios por +`;
+}
+function openModal() { document.getElementById('modal-backdrop').classList.add('open'); }
+function closeModal() { document.getElementById('modal-backdrop').classList.remove('open'); }
+function openReadme() { document.getElementById('readme-backdrop').classList.add('open'); }
+function closeReadme() { document.getElementById('readme-backdrop').classList.remove('open'); }
+
+async function ensureAuth() {
+  if (currentUser) return currentUser;
+  await signInAnonymously(auth);
+  return new Promise(resolve => {
+    const stop = onAuthStateChanged(auth, user => {
+      if (user) { stop(); resolve(user); }
+    });
+  });
+}
+
+async function generateUniqueRoomCode() {
+  for (let i=0;i<30;i++) {
+    const code = `TEMA-${Math.floor(1000 + Math.random()*9000)}`;
+    const snap = await get(ref(db, `rooms/${code}/meta/roomCode`));
+    if (!snap.exists()) return code;
+  }
+  throw new Error('No se pudo generar una sala libre');
+}
+function getModeConfig(value) { return MODES[value] || MODES.rapida; }
+function getRoomLink(code) { return `${location.origin}${location.pathname}?room=${encodeURIComponent(code)}`; }
+async function createRoom() {
+  const user = await ensureAuth();
+  const playerName = getPlayerNameInput() || localState.playerName || 'Jugador';
+  const modeValue = document.getElementById('home-mode-select').value;
+  const mode = getModeConfig(modeValue);
+  const { genreTexts, songs } = compileSongPoolFromLocal();
+  if (!songs.length) return showToast('⚠ No hay canciones válidas en las listas activas');
+  const roomCode = await generateUniqueRoomCode();
+  const playerRef = ref(db, `rooms/${roomCode}/players/${user.uid}`);
+  const roomRef = ref(db, `rooms/${roomCode}`);
+  const roomPayload = {
+    meta: {
+      roomCode,
+      createdAt: serverTimestamp(),
+      createdBy: user.uid,
+      moderatorId: user.uid,
+      status: 'lobby',
+      mode: modeValue,
+      targetScore: mode.targetScore,
+      title: 'TEMAZOS',
+      activeGenres: localState.selectedGenres,
+      tieBreak: false,
+      tieBreakPlayers: null,
+      genreTexts
+    },
+    players: {
+      [user.uid]: {
+        id: user.uid,
+        name: uniqueNameForRoom(playerName, { [user.uid]: { name: playerName } }),
+        score: 0,
+        joinedAt: serverTimestamp(),
+        connected: true,
+        isModerator: true
+      }
+    },
+    currentRound: {
+      roundNumber: 0,
+      phase: 'lobby',
+      songId: '',
+      songUrl: '',
+      songTitle: '',
+      correctYear: null,
+      timer: { duration: ROOM_TIMER_MS, startedAt: null, endsAt: null, running: false },
+      answers: {},
+      results: {}
+    },
+    history: {},
+    usedSongIds: {}
+  };
+  await set(roomRef, roomPayload);
+  localState.playerName = roomPayload.players[user.uid].name;
+  localState.lastRoomCode = roomCode;
+  localState.playerRooms[roomCode] = user.uid;
+  saveLocalState();
+  setPlayerNameInput(localState.playerName);
+  setRoomCodeInput(roomCode);
+  setLinkEntryBanner(false);
+  await attachPresence(roomCode, user.uid);
+  enterRoom(roomCode);
+  history.replaceState(null, '', `?room=${encodeURIComponent(roomCode)}`);
+  showToast('✅ Sala creada');
+}
+
+function uniqueNameForRoom(baseName, playersObj, selfId='') {
+  let name = (baseName || 'Jugador').trim().slice(0,24) || 'Jugador';
+  const existing = new Set(Object.values(playersObj || {}).filter(p => p && p.id !== selfId).map(p => p.name.toLowerCase()));
+  if (!existing.has(name.toLowerCase())) return name;
+  let n = 2;
+  while (existing.has(`${name} ${n}`.toLowerCase())) n++;
+  return `${name} ${n}`;
+}
+async function joinRoomByInput() {
+  const code = normalizeRoomCode(document.getElementById('home-room-code').value);
+  if (!code) return showToast('Introduce un código de sala');
+  await joinRoom(code);
+}
+async function joinRoom(code, preferredName='') {
+  const user = await ensureAuth();
+  code = normalizeRoomCode(code);
+  if (!code) return showToast('Introduce un código de sala');
+
+  const roomSnap = await get(ref(db, `rooms/${code}`));
+  if (!roomSnap.exists()) return showToast('❌ Sala no encontrada');
+
+  const room = roomSnap.val();
+  const existingPlayer = room.players?.[user.uid] || null;
+  const requestedName = (preferredName || getPlayerNameInput() || localState.playerName || '').trim();
+
+  if (!existingPlayer && !requestedName) {
+    setRoomCodeInput(code);
+    setLinkEntryBanner(true);
+    switchScreen('screen-home');
+    document.getElementById('home-player-name').focus();
+    return showToast('Escribe tu nombre para entrar');
+  }
+
+  const baseName = existingPlayer?.name || requestedName;
+  const finalName = uniqueNameForRoom(baseName, room.players || {}, user.uid);
+
+  await update(ref(db, `rooms/${code}/players/${user.uid}`), {
+    id: user.uid,
+    name: finalName,
+    score: Number(existingPlayer?.score || 0),
+    joinedAt: existingPlayer?.joinedAt || serverTimestamp(),
+    connected: true,
+    isModerator: room.meta?.moderatorId === user.uid
+  });
+
+  localState.playerName = finalName;
+  localState.lastRoomCode = code;
+  localState.playerRooms[code] = user.uid;
+  saveLocalState();
+
+  setPlayerNameInput(finalName);
+  setRoomCodeInput(code);
+  setLinkEntryBanner(false);
+
+  await attachPresence(code, user.uid);
+  enterRoom(code);
+  history.replaceState(null, '', `?room=${encodeURIComponent(code)}`);
+
+  if (finalName !== requestedName && requestedName) showToast(`Nombre ajustado a "${finalName}"`);
+  else showToast('✅ Unido a la sala');
+}
+async function attachPresence(roomCode, uid) {
+  const connectedRef = ref(db, `rooms/${roomCode}/players/${uid}/connected`);
+  try {
+    await onDisconnect(connectedRef).set(false);
+    await set(connectedRef, true);
+  } catch (e) {}
+}
+function leaveRoom(navigateHome=true) {
+  stopRoomListener();
+  currentRoomCode = '';
+  roomData = null;
+  clearInterval(timerInterval);
+  timerInterval = null;
+  updateTopBar();
+  if (navigateHome) switchScreen('screen-home');
+  document.getElementById('room-qr').innerHTML = '';
+  history.replaceState(null, '', location.pathname);
+}
+function stopRoomListener() {
+  if (roomUnsub) { roomUnsub(); roomUnsub = null; }
+}
+function enterRoom(code) {
+  currentRoomCode = code;
+  updateTopBar();
+  switchScreen('screen-room');
+  listenRoom(code);
+  renderLastRoomCard();
+}
+function listenRoom(code) {
+  stopRoomListener();
+  const roomRef = ref(db, `rooms/${code}`);
+  const callback = onValue(roomRef, async snap => {
+    if (!snap.exists()) {
+      showToast('La sala se ha cerrado');
+      leaveRoom(true);
+      return;
+    }
+    roomData = snap.val();
+    const self = getSelfPlayer();
+    if (!self && currentUser) {
+      await joinRoom(code, localState.playerName);
+      return;
+    }
+    renderRoom();
+  });
+  roomUnsub = () => off(roomRef, 'value', callback);
+}
+function getSelfPlayer() { return roomData?.players?.[currentUser?.uid || ''] || null; }
+function isModerator() { return !!(currentUser && roomData?.meta?.moderatorId === currentUser.uid); }
+function getSortedPlayers() {
+  const players = Object.values(roomData?.players || {});
+  return players.sort((a,b) => (b.score||0) - (a.score||0) || (a.joinedAt||0) - (b.joinedAt||0) || a.name.localeCompare(b.name));
+}
+function getActiveGenreTexts() { return roomData?.meta?.genreTexts || {}; }
+function getRoomSongs() {
+  const meta = roomData?.meta || {};
+  return compileSongPoolFromTexts(getActiveGenreTexts(), meta.activeGenres || []);
+}
+function pickNextSongFromRoom() {
+  const used = roomData?.usedSongIds || {};
+  const songs = getRoomSongs();
+  if (!songs.length) return null;
+  const unused = songs.filter(song => !used[song.id]);
+  const pool = unused.length ? unused : songs;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+async function startMatch() {
+  if (!isModerator()) return;
+  await update(ref(db, `rooms/${currentRoomCode}/meta`), { status: 'round_ready', tieBreak: false, tieBreakPlayers: null });
+  await update(ref(db, `rooms/${currentRoomCode}/currentRound`), {
+    roundNumber: 0,
+    phase: 'round_ready',
+    songId: '', songUrl: '', songTitle: '', correctYear: null,
+    timer: { duration: ROOM_TIMER_MS, startedAt: null, endsAt: null, running: false },
+    answers: {}, results: {}
+  });
+}
+async function newRound() {
+  if (!isModerator()) return;
+  const song = pickNextSongFromRoom();
+  if (!song) return showToast('⚠ No hay canciones disponibles');
+  const currentRoundNumber = (roomData?.currentRound?.roundNumber || 0) + 1;
+  const updates = {
+    [`rooms/${currentRoomCode}/meta/status`]: 'round_playing',
+    [`rooms/${currentRoomCode}/currentRound`]: {
+      roundNumber: currentRoundNumber,
+      phase: 'round_playing',
+      songId: song.id,
+      songUrl: song.url,
+      songTitle: song.title,
+      correctYear: song.year,
+      timer: { duration: ROOM_TIMER_MS, startedAt: null, endsAt: null, running: false },
+      answers: {},
+      results: {}
+    },
+    [`rooms/${currentRoomCode}/usedSongIds/${song.id}`]: true
+  };
+  await update(ref(db), updates);
+  showToast('🎵 Nueva ronda lista');
+}
+async function openSong() {
+  const url = roomData?.currentRound?.songUrl;
+  if (!url) return showToast('No hay canción cargada');
+  const w = window.open(url, '_blank');
+  if (!w) showToast('🔗 Popup bloqueado, toca de nuevo o permite popups');
+}
+async function startTimer() {
+  if (!isModerator()) return;
+  const round = roomData?.currentRound;
+  if (!round?.songId) return showToast('Primero crea una nueva ronda');
+  if (round.phase === 'round_revealed' || round.phase === 'round_time_up') return;
+  const startedAt = nowServer();
+  const endsAt = startedAt + ROOM_TIMER_MS;
+  await update(ref(db, `rooms/${currentRoomCode}`), {
+    meta: { ...roomData.meta, status: 'round_timer_running' },
+    currentRound: {
+      ...round,
+      phase: 'round_timer_running',
+      timer: { duration: ROOM_TIMER_MS, startedAt, endsAt, running: true }
+    }
+  });
+}
+async function maybeAutoTimeUp() {
+  const round = roomData?.currentRound;
+  if (!round?.timer?.running || !currentRoomCode) return;
+  if (nowServer() < round.timer.endsAt) return;
+  if (!isModerator()) return;
+  await update(ref(db, `rooms/${currentRoomCode}/meta/status`), 'round_time_up');
+  await update(ref(db, `rooms/${currentRoomCode}/currentRound`), {
+    ...round,
+    phase: 'round_time_up',
+    timer: { ...round.timer, running: false }
+  });
+}
+async function submitGuess() {
+  const round = roomData?.currentRound;
+  const phase = round?.phase;
+  if (!round || !['round_playing','round_timer_running'].includes(phase)) return showToast('Ahora no se puede responder');
+  if (round.phase === 'round_timer_running' && round.timer?.endsAt && nowServer() > round.timer.endsAt) return showToast('Tiempo agotado');
+  const raw = document.getElementById('guess-input').value.trim();
+  const guess = parseInt(raw, 10);
+  if (!Number.isFinite(guess)) return showToast('Introduce un año válido');
+  const uid = currentUser.uid;
+  const answerPath = ref(db, `rooms/${currentRoomCode}/currentRound/answers/${uid}`);
+  await runTransaction(answerPath, current => {
+    if (current && current.locked) return;
+    return { guessYear: guess, submittedAt: nowServer(), locked: true };
+  });
+  document.getElementById('guess-input').blur();
+  showToast('✅ Respuesta enviada');
+}
+function buildRoundResults(round, playersObj, meta) {
+  const tiePlayers = meta.tieBreak && Array.isArray(meta.tieBreakPlayers) ? new Set(meta.tieBreakPlayers) : null;
+  const answers = round.answers || {};
+  const results = {};
+  Object.values(playersObj || {}).forEach(player => {
+    const answer = answers[player.id];
+    const inTie = !tiePlayers || tiePlayers.has(player.id);
+    const autoPoints = (answer && inTie) ? calculatePoints(Number(answer.guessYear), Number(round.correctYear)) : 0;
+    const manualAdjustment = Number(round.results?.[player.id]?.manualAdjustment || 0);
+    results[player.id] = {
+      playerId: player.id,
+      guessYear: answer?.guessYear ?? null,
+      submittedAt: answer?.submittedAt ?? null,
+      autoPoints,
+      manualAdjustment,
+      finalPoints: autoPoints + manualAdjustment,
+      qualified: inTie
+    };
+  });
+  return results;
+}
+async function revealRound() {
+  if (!isModerator()) return;
+  const round = roomData?.currentRound;
+  if (!round?.songId) return showToast('No hay ronda activa');
+  const results = buildRoundResults(round, roomData.players || {}, roomData.meta || {});
+  const playerUpdates = {};
+  Object.values(results).forEach(res => {
+    const currentScore = Number(roomData.players?.[res.playerId]?.score || 0);
+    playerUpdates[`rooms/${currentRoomCode}/players/${res.playerId}/score`] = currentScore + res.finalPoints;
+  });
+  const roundNumber = round.roundNumber || 0;
+  const historyEntry = {
+    ...round,
+    phase: 'round_revealed',
+    revealedAt: nowServer(),
+    timer: { ...(round.timer || { duration: ROOM_TIMER_MS }), running: false },
+    results
+  };
+  const updates = {
+    [`rooms/${currentRoomCode}/meta/status`]: 'round_revealed',
+    [`rooms/${currentRoomCode}/currentRound`]: historyEntry,
+    [`rooms/${currentRoomCode}/history/r${roundNumber}`]: historyEntry,
+    ...playerUpdates
+  };
+  await update(ref(db), updates);
+  await evaluateMatchAfterReveal();
+}
+async function evaluateMatchAfterReveal() {
+  const snap = await get(ref(db, `rooms/${currentRoomCode}`));
+  if (!snap.exists()) return;
+  roomData = snap.val();
+  const meta = roomData.meta || {};
+  const players = getSortedPlayers();
+  const topScore = Number(players[0]?.score || 0);
+  const topPlayers = players.filter(p => Number(p.score || 0) === topScore);
+  if (topScore < Number(meta.targetScore || 0)) return;
+  if (topPlayers.length === 1) {
+    await update(ref(db, `rooms/${currentRoomCode}/meta`), { status: 'match_finished', winnerId: topPlayers[0].id, tieBreak: false, tieBreakPlayers: null });
+    await update(ref(db, `rooms/${currentRoomCode}/currentRound/phase`), 'match_finished');
+  } else {
+    await update(ref(db, `rooms/${currentRoomCode}/meta`), { status: 'round_ready', tieBreak: true, tieBreakPlayers: topPlayers.map(p => p.id) });
+    showToast('⚡ Desempate activado');
+  }
+}
+async function nextRoundStep() {
+  if (!isModerator()) return;
+
+  const meta = roomData?.meta || {};
+  const currentRoundNumber = Number(roomData?.currentRound?.roundNumber || 0);
+
+  if (meta.status === 'match_finished') return;
+  if (meta.status !== 'round_revealed') return;
+
+  const cleanRound = {
+    roundNumber: currentRoundNumber,
+    phase: 'round_ready',
+    songId: '',
+    songUrl: '',
+    songTitle: '',
+    correctYear: null,
+    timer: {
+      duration: ROOM_TIMER_MS,
+      startedAt: null,
+      endsAt: null,
+      running: false
+    },
+    answers: {},
+    results: {}
+  };
+
+  await update(ref(db), {
+    [`rooms/${currentRoomCode}/meta/status`]: 'round_ready',
+    [`rooms/${currentRoomCode}/currentRound`]: cleanRound
+  });
+
+  showToast('➡ Lista para cargar la siguiente ronda');
+}
+async function adjustPlayerRoundPoints(playerId, delta) {
+  if (!isModerator()) return;
+  const round = roomData?.currentRound;
+  if (!round || round.phase !== 'round_revealed') return;
+  const currentRes = round.results?.[playerId];
+  if (!currentRes) return;
+  const nextAdjustment = Number(currentRes.manualAdjustment || 0) + delta;
+  const nextFinal = Number(currentRes.autoPoints || 0) + nextAdjustment;
+  const currentPlayerScore = Number(roomData.players?.[playerId]?.score || 0);
+  const nextPlayerScore = currentPlayerScore + delta;
+  const roundNumber = round.roundNumber || 0;
+  const updates = {
+    [`rooms/${currentRoomCode}/currentRound/results/${playerId}/manualAdjustment`]: nextAdjustment,
+    [`rooms/${currentRoomCode}/currentRound/results/${playerId}/finalPoints`]: nextFinal,
+    [`rooms/${currentRoomCode}/history/r${roundNumber}/results/${playerId}/manualAdjustment`]: nextAdjustment,
+    [`rooms/${currentRoomCode}/history/r${roundNumber}/results/${playerId}/finalPoints`]: nextFinal,
+    [`rooms/${currentRoomCode}/players/${playerId}/score`]: nextPlayerScore
+  };
+  await update(ref(db), updates);
+}
+async function resetMatch() {
+  if (!isModerator()) return;
+  const players = roomData?.players || {};
+  const updates = {
+    [`rooms/${currentRoomCode}/meta/status`]: 'lobby',
+    [`rooms/${currentRoomCode}/meta/tieBreak`]: false,
+    [`rooms/${currentRoomCode}/meta/tieBreakPlayers`]: null,
+    [`rooms/${currentRoomCode}/meta/winnerId`]: null,
+    [`rooms/${currentRoomCode}/currentRound`]: {
+      roundNumber: 0,
+      phase: 'lobby',
+      songId: '', songUrl: '', songTitle: '', correctYear: null,
+      timer: { duration: ROOM_TIMER_MS, startedAt: null, endsAt: null, running: false },
+      answers: {}, results: {}
+    },
+    [`rooms/${currentRoomCode}/history`]: {},
+    [`rooms/${currentRoomCode}/usedSongIds`]: {}
+  };
+  Object.keys(players).forEach(pid => updates[`rooms/${currentRoomCode}/players/${pid}/score`] = 0);
+  await update(ref(db), updates);
+  showToast('♻ Partida reiniciada');
+}
+async function closeRoom() {
+  if (!isModerator()) return;
+  await remove(ref(db, `rooms/${currentRoomCode}`));
+  leaveRoom(true);
+}
+async function backToLobby() { if (isModerator()) await resetMatch(); }
+async function rematch() { if (isModerator()) await resetMatch(); }
+async function maybeTransferModerator() {
+  if (!roomData || !currentUser) return;
+  if (roomData.meta?.moderatorId !== currentUser.uid) return;
+  const players = getSortedPlayers().filter(p => p.id !== currentUser.uid);
+  const replacement = players.find(p => p.connected) || players[0];
+  if (replacement) {
+    await update(ref(db, `rooms/${currentRoomCode}/meta`), { moderatorId: replacement.id });
+    await update(ref(db, `rooms/${currentRoomCode}/players/${replacement.id}/isModerator`), true);
+  }
+}
+function renderRoom() {
+  if (!roomData) return;
+  const meta = roomData.meta || {};
+  const round = roomData.currentRound || {};
+  const self = getSelfPlayer();
+  const players = getSortedPlayers();
+  const roleText = isModerator() ? 'Moderador' : 'Jugador';
+  const link = getRoomLink(meta.roomCode || currentRoomCode);
+  document.getElementById('room-code-display').textContent = meta.roomCode || currentRoomCode;
+  document.getElementById('room-link-display').textContent = link;
+  document.getElementById('badge-mode').textContent = `${MODES[meta.mode]?.label || 'Modo'} · ${meta.targetScore || 0} pts`;
+  document.getElementById('badge-phase').textContent = PHASE_LABELS[meta.status] || meta.status || '—';
+  document.getElementById('badge-role').textContent = roleText;
+  document.getElementById('badge-role').className = 'badge ' + (isModerator() ? 'mod' : '');
+  document.getElementById('badge-tiebreak').classList.toggle('hidden', !meta.tieBreak);
+  document.getElementById('badge-tiebreak').textContent = meta.tieBreak ? '⚡ Desempate' : '';
+  document.getElementById('stat-round').textContent = String(round.roundNumber || 0);
+  document.getElementById('stat-players').textContent = String(players.length);
+  document.getElementById('stat-target').textContent = String(meta.targetScore || 0);
+  renderRoomQR(link);
+  renderActiveGenres(meta);
+  renderPlayersList(players, meta);
+  renderRound(round, meta, self);
+  renderModeratorPanel(meta, round);
+  renderResults(round, players);
+  renderFinal(players, meta);
+  updateTopBar();
+}
+function renderRoomQR(link) {
+  const box = document.getElementById('room-qr');
+  if (box.dataset.link === link) return;
+  box.dataset.link = link;
+  box.innerHTML = '';
+  QRCode.toCanvas(link, { width: 220, margin: 1, color: { dark: '#f0f0ff', light: '#00000000' } }, (err, canvas) => {
+    if (!err) box.appendChild(canvas);
+  });
+}
+function renderActiveGenres(meta) {
+  const wrap = document.getElementById('lobby-genre-pills');
+  wrap.innerHTML = '';
+  (meta.activeGenres || []).forEach(id => {
+    const genre = GENRE_LISTS[id];
+    if (!genre) return;
+    const pill = document.createElement('div');
+    pill.className = `genre-pill ${genre.colorClass}`;
+    pill.innerHTML = `<span class="pill-emoji">${genre.emoji}</span>${genre.label}`;
+    wrap.appendChild(pill);
+  });
+  const total = getRoomSongs().length;
+  document.getElementById('lobby-genre-info').innerHTML = `${(meta.activeGenres || []).map(id => GENRE_LISTS[id]?.label || id).join(' + ')} → <span>${total} canciones</span>`;
+}
+function renderPlayersList(players, meta) {
+  const box = document.getElementById('players-live-list');
+  box.innerHTML = '';
+  players.forEach((player, index) => {
+    const row = document.createElement('div');
+    row.className = 'player-chip';
+    const inTie = !meta.tieBreak || (meta.tieBreakPlayers || []).includes(player.id);
+    row.innerHTML = `
+      <div class="player-chip-left">
+        <div class="player-dot ${player.connected ? 'online' : 'offline'}"></div>
+        <div>
+          <div class="player-chip-name">#${index + 1} · ${esc(player.name)} ${meta.moderatorId === player.id ? '👑' : ''}</div>
+          <div class="subtle">${player.connected ? 'Conectado' : 'Desconectado'}${meta.tieBreak ? (inTie ? ' · Sigue en desempate' : ' · Fuera del desempate') : ''}</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="player-score-small">${Number(player.score || 0)}</div>
+        ${isModerator() && meta.moderatorId !== player.id ? `<button class="btn-del-player" data-kick="${player.id}" title="Expulsar">✕</button>` : ''}
+      </div>`;
+    box.appendChild(row);
+  });
+  box.querySelectorAll('[data-kick]').forEach(btn => btn.addEventListener('click', async () => {
+    const pid = btn.dataset.kick;
+    await remove(ref(db, `rooms/${currentRoomCode}/players/${pid}`));
+  }));
+}
+function renderRound(round, meta, self) {
+  const phase = round.phase || meta.status || 'lobby';
+  const title = document.getElementById('song-title-text-live');
+  const year = document.getElementById('year-reveal-live');
+  const phaseText = document.getElementById('phase-text-live');
+  const phaseDot = document.getElementById('phase-dot-live');
+  const answerStatus = document.getElementById('answer-status');
+  const guessInput = document.getElementById('guess-input');
+  const submitBtn = document.getElementById('btn-submit-guess');
+  const answer = round.answers?.[currentUser?.uid || ''];
+  phaseText.textContent = PHASE_LABELS[phase] || phase.toUpperCase();
+  phaseDot.className = 'phase-dot ' + ((phase === 'round_timer_running' || phase === 'round_playing') ? 'playing' : (phase === 'round_revealed' || phase === 'match_finished') ? 'revealed' : '');
+  if (!round.songId) {
+    title.textContent = '· · · · · · ·';
+    title.classList.add('hidden-title');
+  } else if (phase === 'round_revealed' || phase === 'match_finished') {
+    title.textContent = round.songTitle || '—';
+    title.classList.remove('hidden-title');
+  } else {
+    title.textContent = '🎵 TEMAZO';
+    title.classList.add('hidden-title');
+  }
+  if (phase === 'round_revealed' || phase === 'match_finished') {
+    year.style.display = 'block';
+    year.classList.add('show');
+    year.textContent = round.correctYear ?? '—';
+  } else {
+    year.classList.remove('show');
+    year.style.display = 'none';
+    year.textContent = '';
+  }
+  const canAnswer = !!self && ['round_playing','round_timer_running'].includes(phase) && (!meta.tieBreak || (meta.tieBreakPlayers || []).includes(self.id)) && (!round.timer?.endsAt || nowServer() <= round.timer.endsAt);
+  guessInput.disabled = !canAnswer || !!answer;
+  submitBtn.disabled = !canAnswer || !!answer;
+  if (answer) {
+    guessInput.value = answer.guessYear;
+    answerStatus.textContent = `✅ Respuesta enviada: ${answer.guessYear}`;
+  } else if (meta.tieBreak && self && !(meta.tieBreakPlayers || []).includes(self.id)) {
+    guessInput.value = '';
+    answerStatus.textContent = 'No participas en este desempate.';
+  } else if (phase === 'round_revealed' || phase === 'match_finished') {
+    answerStatus.textContent = 'Ronda cerrada.';
+  } else {
+    answerStatus.textContent = 'Aún no has enviado respuesta.';
+  }
+  renderTimer(round, phase);
+  const revealCard = document.getElementById('reveal-card');
+  revealCard.classList.toggle('hidden', !(phase === 'round_revealed' || phase === 'match_finished'));
+}
+function renderTimer(round, phase) {
+  const timerEl = document.getElementById('timer-display');
+  const sub = document.getElementById('round-subtext');
+  clearInterval(timerInterval);
+  timerInterval = null;
+  const update = () => {
+    let seconds = 35;
+    if (round?.timer?.endsAt && (phase === 'round_timer_running' || phase === 'round_time_up')) {
+      seconds = Math.max(0, Math.ceil((round.timer.endsAt - nowServer())/1000));
+      if (seconds <= 0) maybeAutoTimeUp();
+    }
+    if (phase === 'round_revealed' || phase === 'match_finished') seconds = 0;
+    timerEl.textContent = String(seconds).padStart(2,'0');
+    sub.textContent =
+      phase === 'lobby' ? 'Esperando al moderador' :
+      phase === 'round_ready' ? 'Ronda preparada. Abre canción y lanza el contador.' :
+      phase === 'round_playing' ? 'Canción cargada. El moderador aún no ha iniciado el contador.' :
+      phase === 'round_timer_running' ? 'Introduce el año y envíalo antes de que acabe.' :
+      phase === 'round_time_up' ? 'Tiempo agotado. Esperando revelación.' :
+      phase === 'round_revealed' ? 'Año revelado y puntos sumados.' :
+      'Partida terminada.';
+  };
+  update();
+  if (phase === 'round_timer_running') timerInterval = setInterval(update, 300);
+}
+function renderModeratorPanel(meta, round) {
+  const panel = document.getElementById('moderator-panel');
+  panel.classList.toggle('hidden', !isModerator());
+  if (!isModerator()) return;
+  document.getElementById('btn-start-match').disabled = !(meta.status === 'lobby');
+  document.getElementById('btn-new-round').disabled = !(meta.status === 'round_ready');
+  document.getElementById('btn-open-song').disabled = !round.songUrl;
+  document.getElementById('btn-start-timer').disabled = !(round.phase === 'round_playing');
+  document.getElementById('btn-reveal-round').disabled = !round.songId || ['round_revealed','match_finished'].includes(round.phase);
+  document.getElementById('btn-next-round').disabled = meta.status !== 'round_revealed';
+}
+function renderResults(round, players) {
+  const list = document.getElementById('results-list');
+  list.innerHTML = '';
+  const results = round.results || {};
+  players.forEach(player => {
+    const result = results[player.id];
+    if (!result) return;
+    const row = document.createElement('div');
+    row.className = 'result-row';
+    row.innerHTML = `
+      <div class="result-top">
+        <div>
+          <div class="result-name">${esc(player.name)}</div>
+          <div class="result-meta">Apuesta: ${result.guessYear ?? '—'} · Auto: ${result.autoPoints} · Ajuste: ${result.manualAdjustment || 0}</div>
+        </div>
+        <div class="scored-pts" data-pts="${Math.max(0, Math.min(3, result.finalPoints))}">${result.finalPoints} pts</div>
+      </div>
+      ${isModerator() ? `<div class="adjust-row"><button class="btn-xs bad" data-adjust="-1">-1</button><button class="btn-xs warn" data-adjust="1">+1</button></div>` : ''}`;
+    if (isModerator()) {
+      row.querySelectorAll('[data-adjust]').forEach(btn => btn.addEventListener('click', () => adjustPlayerRoundPoints(player.id, Number(btn.dataset.adjust))));
+    }
+    list.appendChild(row);
+  });
+}
+function renderFinal(players, meta) {
+  const finalCard = document.getElementById('final-card');
+  const isFinal = meta.status === 'match_finished';
+  finalCard.classList.toggle('hidden', !isFinal);
+  if (!isFinal) return;
+  const winner = players.find(p => p.id === meta.winnerId) || players[0];
+  document.getElementById('winner-name').textContent = winner?.name || '—';
+  document.getElementById('winner-score').textContent = `${winner?.score || 0} puntos${meta.tieBreak ? ' · tras desempate' : ''}`;
+  const list = document.getElementById('final-ranking-list');
+  list.innerHTML = '';
+  players.forEach((player, index) => {
+    const row = document.createElement('div');
+    row.className = 'result-row';
+    row.innerHTML = `<div class="result-top"><div class="result-name">#${index+1} · ${esc(player.name)}</div><div class="player-score-small">${player.score || 0}</div></div>`;
+    list.appendChild(row);
+  });
+}
+function renderLastRoomCard() {
+  const card = document.getElementById('last-room-card');
+  const code = localState.lastRoomCode;
+  card.classList.toggle('hidden', !code);
+  document.getElementById('last-room-code').textContent = code || '—';
+  document.getElementById('last-room-name').textContent = localState.playerName ? `Entrar como ${localState.playerName}` : 'Última sala usada';
+}
+function initReadme() {
+  document.getElementById('readme-content').innerHTML = `
+    <h3>Arquitectura</h3>
+    <p>HTML/CSS/JS vanilla + Firebase Anonymous Auth + Realtime Database. Un solo <code>index.html</code> reutiliza la estética cyber/neón de la v7 y mantiene listas pipe-separated por género.</p>
+    <h3>Flujo de sala</h3>
+    <ul>
+      <li>Moderador crea sala con modo y géneros.</li>
+      <li>Se guarda <code>meta.activeGenres</code> y <code>meta.genreTexts</code> para que todos usen el mismo pool.</li>
+      <li>Nueva ronda → canción aleatoria no usada → iniciar temporizador → respuestas → revelar → suma automática → ajuste manual opcional.</li>
+    </ul>
+    <h3>Modelo de datos</h3>
+    <pre>rooms/{ROOM_CODE}
+  meta
+  players/{uid}
+  currentRound
+  history
+  usedSongIds</pre>
+    <h3>Puntuación</h3>
+    <pre>0 años = 3
+±1 = 2
+±2 o ±3 = 1
+>3 = 0</pre>
+    <h3>Ganador y desempate</h3>
+    <p>Cuando alguien alcanza la meta, si el primer puesto es único se termina la partida. Si hay empate en primera posición, se activa <code>tieBreak</code> y solo los empatados siguen puntuando hasta tener un ganador único.</p>
+    <h3>Recuperación local</h3>
+    <p>En <code>localStorage</code> se guarda nombre, última sala, géneros activos y listas editadas. Firebase Anonymous Auth mantiene el mismo <code>uid</code> en el mismo navegador normalmente, así que la reentrada es razonable sin login manual.</p>
+    <h3>Qué viene de la v7</h3>
+    <p>Se reutilizan la estética, gran parte del CSS, el sistema <code>GENRE_LISTS</code>, el parser <code>URL | AÑO | TÍTULO</code>, la deduplicación por URL/query, el modal de listas y la filosofía móvil. Lo nuevo es toda la capa de salas, auth, presencia, fases, ranking realtime, QR y scoring automático.</p>`;
+}
+
+// Events
+window.addEventListener('beforeunload', async () => {
+  if (currentRoomCode && currentUser) {
+    try { await set(ref(db, `rooms/${currentRoomCode}/players/${currentUser.uid}/connected`), false); } catch(e) {}
+    await maybeTransferModerator();
+  }
+});
+
+document.getElementById('btn-create-room').addEventListener('click', createRoom);
+document.getElementById('btn-join-room').addEventListener('click', joinRoomByInput);
+document.getElementById('btn-rejoin-last').addEventListener('click', () => joinRoom(localState.lastRoomCode));
+document.getElementById('btn-copy-room-link').addEventListener('click', async () => {
+  const link = getRoomLink(roomData?.meta?.roomCode || currentRoomCode);
+  const ok = await copyTextFallback(link);
+  showToast(ok ? '📋 Link copiado' : 'No se pudo copiar automáticamente');
+});
+document.getElementById('btn-share-room').addEventListener('click', async () => {
+  const code = roomData?.meta?.roomCode || currentRoomCode;
+  const link = getRoomLink(code);
+  const textShare = `Únete a mi sala de TEMAZOS: ${code}\n${link}`;
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: 'Sala TEMAZOS', text: textShare, url: link });
+      return;
+    }
+  } catch (e) {}
+  const wa = `https://wa.me/?text=${encodeURIComponent(textShare)}`;
+  const w = window.open(wa, '_blank');
+  if (!w) {
+    const ok = await copyTextFallback(textShare);
+    showToast(ok ? 'Mensaje copiado para compartir' : 'No se pudo compartir');
+  }
+});
+document.getElementById('btn-leave-room').addEventListener('click', async () => {
+  if (currentRoomCode && currentUser) {
+    await set(ref(db, `rooms/${currentRoomCode}/players/${currentUser.uid}/connected`), false);
+    if (isModerator()) await maybeTransferModerator();
+  }
+  leaveRoom(true);
+});
+document.getElementById('btn-submit-guess').addEventListener('click', submitGuess);
+document.getElementById('guess-input').addEventListener('keydown', e => { if (e.key === 'Enter') submitGuess(); });
+document.getElementById('btn-start-match').addEventListener('click', startMatch);
+document.getElementById('btn-new-round').addEventListener('click', newRound);
+document.getElementById('btn-open-song').addEventListener('click', openSong);
+document.getElementById('btn-start-timer').addEventListener('click', startTimer);
+document.getElementById('btn-reveal-round').addEventListener('click', revealRound);
+document.getElementById('btn-next-round').addEventListener('click', nextRoundStep);
+document.getElementById('btn-reset-match').addEventListener('click', resetMatch);
+document.getElementById('btn-close-room').addEventListener('click', closeRoom);
+document.getElementById('btn-rematch').addEventListener('click', rematch);
+document.getElementById('btn-back-lobby').addEventListener('click', backToLobby);
+document.getElementById('btn-open-modal').addEventListener('click', openModal);
+document.getElementById('btn-close-modal').addEventListener('click', closeModal);
+document.getElementById('modal-backdrop').addEventListener('click', e => { if (e.target.id === 'modal-backdrop') closeModal(); });
+document.getElementById('btn-open-readme').addEventListener('click', openReadme);
+document.getElementById('btn-close-readme').addEventListener('click', closeReadme);
+document.getElementById('readme-backdrop').addEventListener('click', e => { if (e.target.id === 'readme-backdrop') closeReadme(); });
+document.getElementById('btn-open-chatgpt').addEventListener('click', async () => {
+  const value = document.getElementById('chatgpt-genre-input').value.trim();
+  if (!value) return showToast('Escribe un género');
+  const prompt = getChatGPTPrompt(value);
+  try { await navigator.clipboard.writeText(prompt); } catch(e) {}
+  window.open('https://chatgpt.com', '_blank');
+  const el = document.getElementById('chatgpt-status');
+  el.className = 'parse-status ok';
+  el.textContent = '✅ Prompt copiado';
+  setTimeout(() => el.className = 'parse-status', 2600);
+});
+document.getElementById('btn-reset-local-used').addEventListener('click', () => showToast('En esta versión, las canciones usadas se controlan por sala en Firebase.'));
+document.getElementById('home-player-name').addEventListener('input', e => { localState.playerName = e.target.value; saveLocalState(); renderLastRoomCard(); });
+document.getElementById('home-room-code').addEventListener('input', e => e.target.value = normalizeRoomCode(e.target.value));
+document.getElementById('home-player-name').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoomByInput(); });
+document.getElementById('home-room-code').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoomByInput(); });
+
+onAuthStateChanged(auth, async user => {
+  currentUser = user || null;
+  updateTopBar();
+  if (!user) return;
+
+  document.getElementById('auth-status').textContent = 'ok';
+
+  const params = new URLSearchParams(location.search);
+  const roomCode = normalizeRoomCode(params.get('room') || '');
+  const rejoinUid = roomCode ? localState.playerRooms?.[roomCode] : '';
+
+  if (roomCode) {
+    pendingLinkRoomCode = roomCode;
+    setRoomCodeInput(roomCode);
+
+    if (rejoinUid && rejoinUid === user.uid && localState.playerName) {
+      await joinRoom(roomCode, localState.playerName);
+    } else {
+      setLinkEntryBanner(true);
+      switchScreen('screen-home');
+      setTimeout(() => {
+        document.getElementById('home-player-name').focus();
+      }, 30);
+    }
+  }
+});
+
+// Init UI
+setPlayerNameInput(localState.playerName || '');
+setRoomCodeInput(normalizeRoomCode(new URLSearchParams(location.search).get('room') || localState.lastRoomCode || ''));
+renderLastRoomCard();
+setLinkEntryBanner(!!new URLSearchParams(location.search).get('room'));
+initReadme();
+buildHomeGenrePills();
+buildGenreTabsModal();
+updateTopBar();
+ensureAuth().catch(() => showToast('Error autenticando con Firebase'));
+</script>
+</body>
+</html>
