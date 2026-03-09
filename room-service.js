@@ -127,14 +127,18 @@ export async function markPresence(roomCode, playerId) {
     await update(playerRef, { connected: true, lastSeen: serverTimestamp() });
     const disconnectRef = onDisconnect(playerRef);
     await disconnectRef.update({ connected: false, lastSeen: serverTimestamp() });
-  } catch {}
+  } catch (err) {
+    console.warn('markPresence failed:', err?.message);
+  }
 }
 
 export async function leaveRoom(roomCode, playerId) {
   if (!roomCode || !playerId) return;
   try {
     await update(ref(db, `rooms/${roomCode}/players/${playerId}`), { connected: false });
-  } catch {}
+  } catch (err) {
+    console.warn('leaveRoom failed:', err?.message);
+  }
 }
 
 export async function updateRoomSettings(roomCode, patch = {}) {

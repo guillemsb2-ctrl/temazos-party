@@ -49,11 +49,7 @@ function renderHomeView() {
       joinBtn.classList.remove('secondary');
       joinBtn.classList.add('primary');
     }
-    if (storedName) {
-      document.getElementById('home-name').focus();
-    } else {
-      document.getElementById('home-name').focus();
-    }
+    document.getElementById('home-name').focus();
   }
 
   document.getElementById('btn-create-room').addEventListener('click', handleCreateRoom);
@@ -109,7 +105,9 @@ async function loadMyRooms() {
       if (snap.exists()) {
         myRooms.push(snap.val());
       }
-    } catch {}
+    } catch (err) {
+      console.warn(`Failed to load room ${code}:`, err?.message);
+    }
   }
 
   renderMyRooms(myRooms);
