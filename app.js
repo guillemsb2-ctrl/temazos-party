@@ -380,12 +380,8 @@ function connectToRoom(roomCode) {
         return;
       }
 
-      if (isGameActive && state.currentView !== 'game') {
+      if (isGameActive) {
         showGameView();
-      } else if (isGameActive && state.currentView === 'game') {
-        showGameView();
-      } else if (!isGameActive && state.currentView === 'game') {
-        showLobbyView();
       } else {
         showLobbyView();
       }

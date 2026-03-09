@@ -341,7 +341,8 @@ function renderCompactModeratorPanel(container, { room }) {
 
   const songPanel = container.querySelector('#song-link-panel');
   if (round.songUrl) {
-    songPanel.innerHTML = `<div class="helper-line">Canción cargada:</div><div class="song-url"><a href="${escapeHtml(round.songUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(round.songTitle)}</a></div>`;
+    const safeUrl = safeHref(round.songUrl);
+    songPanel.innerHTML = `<div class="helper-line">Canción cargada:</div><div class="song-url"><a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${escapeHtml(round.songTitle)}</a></div>`;
   } else {
     songPanel.innerHTML = '<div class="helper-line">Aún no hay canción cargada.</div>';
   }
@@ -441,4 +442,14 @@ function escapeHtml(value = '') {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+function safeHref(url = '') {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      return escapeHtml(url);
+    }
+  } catch {}
+  return '#';
 }
