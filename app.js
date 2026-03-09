@@ -98,17 +98,15 @@ async function loadMyRooms() {
   const myRoomCodes = readStorage('temazos.myRooms', []);
   if (!myRoomCodes.length) return;
 
-  const myRooms = [];
-  for (const code of myRoomCodes.slice(-10)) {
-    try {
+  const results = await Promise.allSettled(
+    myRoomCodes.slice(-10).map(async (code) => {
       const snap = await get(ref(db, `rooms/${code}`));
-      if (snap.exists()) {
-        myRooms.push(snap.val());
-      }
-    } catch (err) {
-      console.warn(`Failed to load room ${code}:`, err?.message);
-    }
-  }
+      return snap.exists() ? snap.val() : null;
+    })
+  );
+  const myRooms = results
+    .filter((r) => r.status === 'fulfilled' && r.value)
+    .map((r) => r.value);
 
   renderMyRooms(myRooms);
 
@@ -258,7 +256,12 @@ function connectToRoom(roomCode) {
   if (state.roomUnsub) state.roomUnsub();
   state.roomCode = roomCode;
   history.replaceState({}, '', roomShareUrl(roomCode));
-  state.roomUnsub = subscribeRoom(roomCode, async (room) => {
+
+  let presenceMarked = false;
+  let renderTimer = null;
+  let lastRoomJson = '';
+
+  state.roomUnsub = subscribeRoom(roomCode, (room) => {
     if (!room) {
       showToast('La sala ya no existe');
       state.room = null;
@@ -271,10 +274,39 @@ function connectToRoom(roomCode) {
       state.playerId = saved?.playerId || null;
       state.moderatorToken = saved?.moderatorToken || null;
     }
-    if (state.playerId) await markPresence(roomCode, state.playerId);
-    renderRoom({ room, currentPlayerId: state.playerId, isModerator: isModerator(), remainingSeconds: computeRemainingSeconds(room) });
-    bindRoomEvents();
-    watchTimer(room);
+
+    if (state.playerId && !presenceMarked) {
+      presenceMarked = true;
+      markPresence(roomCode, state.playerId);
+    }
+
+    const fingerprint = roomFingerprint(room);
+    if (fingerprint === lastRoomJson) return;
+    lastRoomJson = fingerprint;
+
+    clearTimeout(renderTimer);
+    renderTimer = setTimeout(() => {
+      renderRoom({ room: state.room, currentPlayerId: state.playerId, isModerator: isModerator(), remainingSeconds: computeRemainingSeconds(state.room) });
+      bindRoomEvents();
+      watchTimer(state.room);
+    }, 80);
+  });
+}
+
+function roomFingerprint(room) {
+  const meta = room?.meta || {};
+  const round = room?.currentRound || {};
+  const players = room?.players || {};
+  return JSON.stringify({
+    s: meta.status, m: meta.mode, t: meta.targetScore, tb: meta.isTieBreak,
+    cl: meta.closed, ag: meta.activeGenres,
+    rn: round.roundNumber, ph: round.phase, si: round.songId,
+    st: round.songTitle, cy: round.correctYear,
+    tr: round.timer?.running, te: round.timer?.endsAt,
+    an: round.answers, rs: round.results,
+    pl: Object.fromEntries(
+      Object.entries(players).map(([id, p]) => [id, { n: p.name, sc: p.score, c: p.connected }])
+    ),
   });
 }
 

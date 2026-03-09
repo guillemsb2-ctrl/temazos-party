@@ -77,8 +77,12 @@ export function parseSongs(raw, genreKey) {
     .filter(Boolean);
 }
 
+const songCache = new Map();
+
 export function getSongsByGenres(activeGenres = []) {
   const genreKeys = activeGenres.length ? activeGenres : ['pop'];
+  const cacheKey = genreKeys.slice().sort().join(',');
+  if (songCache.has(cacheKey)) return songCache.get(cacheKey);
   const byUrl = new Map();
   for (const key of genreKeys) {
     const parsed = parseSongs(RAW_LISTS[key] || '', key);
@@ -86,5 +90,7 @@ export function getSongsByGenres(activeGenres = []) {
       if (!byUrl.has(song.url)) byUrl.set(song.url, song);
     }
   }
-  return Array.from(byUrl.values());
+  const result = Array.from(byUrl.values());
+  songCache.set(cacheKey, result);
+  return result;
 }

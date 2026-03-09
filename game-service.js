@@ -23,17 +23,24 @@ function pickUnusedSong(room) {
 }
 
 export async function startMatch(roomCode) {
-  await update(ref(db, `rooms/${roomCode}/meta`), { status: 'round_ready' });
-  await update(ref(db, `rooms/${roomCode}/currentRound`), {
-    roundNumber: 0,
-    phase: 'round_ready',
-    songId: '',
-    songUrl: '',
-    songTitle: '',
-    correctYear: null,
-    timer: { duration: ROOM_TIMER_SECONDS, startedAt: null, endsAt: null, running: false },
-    answers: {},
-    results: {},
+  const roomSnap = await get(ref(db, `rooms/${roomCode}`));
+  const room = roomSnap.val();
+  if (!room) throw new Error('Sala no encontrada');
+  const song = pickUnusedSong(room);
+  await update(ref(db), {
+    [`rooms/${roomCode}/meta/status`]: 'round_ready',
+    [`rooms/${roomCode}/currentRound`]: {
+      roundNumber: 1,
+      phase: 'round_ready',
+      songId: song.id,
+      songUrl: song.url,
+      songTitle: song.title,
+      correctYear: song.year,
+      timer: { duration: ROOM_TIMER_SECONDS, startedAt: null, endsAt: null, running: false },
+      answers: {},
+      results: {},
+    },
+    [`rooms/${roomCode}/usedSongIds/${song.id}`]: true,
   });
 }
 
@@ -182,15 +189,21 @@ export async function nextRoundStep(roomCode) {
   const room = roomSnap.val();
   if (!room) throw new Error('Sala no encontrada');
   if (room?.meta?.status === 'match_finished') return;
+  const song = pickUnusedSong(room);
+  const nextRoundNumber = Number(room?.currentRound?.roundNumber || 0) + 1;
   await update(ref(db), {
     [`rooms/${roomCode}/meta/status`]: 'round_ready',
-    [`rooms/${roomCode}/currentRound/phase`]: 'round_ready',
-    [`rooms/${roomCode}/currentRound/answers`]: {},
-    [`rooms/${roomCode}/currentRound/results`]: {},
-    [`rooms/${roomCode}/currentRound/timer`]: { duration: ROOM_TIMER_SECONDS, startedAt: null, endsAt: null, running: false },
-    [`rooms/${roomCode}/currentRound/songId`]: '',
-    [`rooms/${roomCode}/currentRound/songUrl`]: '',
-    [`rooms/${roomCode}/currentRound/songTitle`]: '',
-    [`rooms/${roomCode}/currentRound/correctYear`]: null,
+    [`rooms/${roomCode}/currentRound`]: {
+      roundNumber: nextRoundNumber,
+      phase: 'round_ready',
+      songId: song.id,
+      songUrl: song.url,
+      songTitle: song.title,
+      correctYear: song.year,
+      timer: { duration: ROOM_TIMER_SECONDS, startedAt: null, endsAt: null, running: false },
+      answers: {},
+      results: {},
+    },
+    [`rooms/${roomCode}/usedSongIds/${song.id}`]: true,
   });
 }
