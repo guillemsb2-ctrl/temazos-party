@@ -235,6 +235,18 @@ input:focus { border-color: rgba(0,245,255,.45); box-shadow: 0 0 0 3px rgba(0,24
 .connected-text { color: var(--green); }
 .disconnected-text { color: var(--danger); opacity: .7; }
 
+/* Player action buttons (moderator) */
+.player-actions-wrap { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.player-action-btn {
+  width: 32px; height: 32px; border-radius: 10px; border: 1px solid var(--border);
+  background: rgba(255,255,255,.04); color: var(--text); cursor: pointer;
+  display: grid; place-items: center; font-size: 14px; transition: .15s;
+  padding: 0; line-height: 1;
+}
+.player-action-btn:hover { background: rgba(255,255,255,.1); }
+.player-action-btn.kick-btn:hover { background: rgba(255,45,120,.2); border-color: rgba(255,45,120,.4); }
+.player-action-btn.rename-btn:hover { background: rgba(0,245,255,.15); border-color: rgba(0,245,255,.3); }
+
 /* My rooms dashboard */
 .my-rooms-card { border-color: rgba(255,45,120,.2); }
 .my-room-row {

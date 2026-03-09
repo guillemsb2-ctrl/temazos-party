@@ -185,7 +185,7 @@ export function renderLobby({ room, currentPlayerId, isModerator }) {
   `;
 
   const playersList = view.querySelector('#players-list');
-  renderPlayersList(playersList, sortedPlayers, currentPlayerId);
+  renderPlayersList(playersList, sortedPlayers, currentPlayerId, null, isModerator);
 
   const qrBox = view.querySelector('#qr-box');
   if (typeof QRCode !== 'undefined' && qrBox) {
@@ -375,7 +375,7 @@ function renderCompactModeratorPanel(container, { room }) {
 
 /* ── SHARED HELPERS ── */
 
-function renderPlayersList(container, sortedPlayers, currentPlayerId, round) {
+function renderPlayersList(container, sortedPlayers, currentPlayerId, round, showModActions) {
   if (!container) return;
   if (!sortedPlayers.length) {
     container.innerHTML = '<p class="muted-text">Aún no hay jugadores. Comparte el enlace para que se unan.</p>';
@@ -384,6 +384,7 @@ function renderPlayersList(container, sortedPlayers, currentPlayerId, round) {
   container.innerHTML = '';
   sortedPlayers.forEach((player, index) => {
     const roundResult = round?.results?.[player.id];
+    const canManage = showModActions && !player.isModerator && player.id !== currentPlayerId;
     const row = document.createElement('div');
     row.className = `player-row${player.id === currentPlayerId ? ' is-me' : ''}${!player.connected ? ' disconnected' : ''}`;
     row.innerHTML = `
@@ -402,7 +403,13 @@ function renderPlayersList(container, sortedPlayers, currentPlayerId, round) {
           </div>
         </div>
       </div>
-      <div class="score-box">${player.score || 0}</div>
+      <div class="player-actions-wrap">
+        ${canManage ? `
+          <button class="player-action-btn rename-btn" data-rename-player="${escapeHtml(player.id)}" data-current-name="${escapeHtml(player.name || '')}" title="Cambiar nombre">✏️</button>
+          <button class="player-action-btn kick-btn" data-kick-player="${escapeHtml(player.id)}" data-player-name="${escapeHtml(player.name || '')}" title="Expulsar jugador">🗑️</button>
+        ` : ''}
+        <div class="score-box">${player.score || 0}</div>
+      </div>
     `;
     container.appendChild(row);
   });
