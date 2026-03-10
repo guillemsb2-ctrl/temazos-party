@@ -139,6 +139,16 @@ export function renderLobby({ room, currentPlayerId, isModerator }) {
       </div>
     </section>
 
+    ${isModerator ? `
+    <section class="card">
+      <div class="card-head compact">
+        <span class="eyebrow">modo de juego</span>
+        <h3>Tipo de partida</h3>
+      </div>
+      <div class="segmented" id="lobby-mode-picker"></div>
+    </section>
+    ` : ''}
+
     <section class="card">
       <div class="card-head compact">
         <span class="eyebrow">listas activas</span>
@@ -184,6 +194,17 @@ export function renderLobby({ room, currentPlayerId, isModerator }) {
     </section>
     `}
   `;
+
+  const lobbyModePicker = view.querySelector('#lobby-mode-picker');
+  if (lobbyModePicker) {
+    Object.values(MODES).forEach((mode) => {
+      lobbyModePicker.appendChild(segmentButton({
+        text: `${mode.label} · ${mode.targetScore}`,
+        active: mode.key === (meta.mode || 'bala'),
+        attrs: { 'data-lobby-mode': mode.key },
+      }));
+    });
+  }
 
   const playersList = view.querySelector('#players-list');
   renderPlayersList(playersList, sortedPlayers, currentPlayerId, null, isModerator);
