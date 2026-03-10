@@ -264,6 +264,11 @@ async function pushImportedSongsToFirebase() {
 
 function showGameView() {
   state.currentView = 'game';
+
+  const prevInput = document.getElementById('guess-input');
+  const savedValue = prevInput?.value || '';
+  const hadFocus = document.activeElement === prevInput;
+
   renderGame({
     room: state.room,
     currentPlayerId: state.playerId,
@@ -272,6 +277,14 @@ function showGameView() {
   });
   bindGameEvents();
   watchTimer(state.room);
+
+  if (savedValue || hadFocus) {
+    const newInput = document.getElementById('guess-input');
+    if (newInput && !newInput.disabled) {
+      newInput.value = savedValue;
+      if (hadFocus) newInput.focus();
+    }
+  }
 }
 
 function bindGameEvents() {
@@ -409,7 +422,7 @@ function connectToRoom(roomCode) {
       markPresence(roomCode, state.playerId);
     }
 
-    const fingerprint = roomFingerprint(room);
+    const fingerprint = roomFingerprint(room, state.playerId);
     if (fingerprint === lastRoomJson) return;
     lastRoomJson = fingerprint;
 
@@ -431,7 +444,7 @@ function connectToRoom(roomCode) {
   });
 }
 
-function roomFingerprint(room) {
+function roomFingerprint(room, playerId) {
   const meta = room?.meta || {};
   const round = room?.currentRound || {};
   const players = room?.players || {};
@@ -441,7 +454,7 @@ function roomFingerprint(room) {
     rn: round.roundNumber, ph: round.phase, si: round.songId,
     st: round.songTitle, cy: round.correctYear,
     tr: round.timer?.running, te: round.timer?.endsAt,
-    an: round.answers, rs: round.results,
+    ma: round.answers?.[playerId], rs: round.results,
     pl: Object.fromEntries(
       Object.entries(players).map(([id, p]) => [id, { n: p.name, sc: p.score, c: p.connected }])
     ),
