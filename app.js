@@ -5,7 +5,8 @@ import { GENRE_META } from './songs-data.js';
 import { MODES, safeUpperRoom, readStorage, writeStorage, roomShareUrl, clamp, uid } from './utils.js';
 import { createRoom, joinRoom, subscribeRoom, markPresence, leaveRoom, updateRoomSettings, resetScores, closeRoom, destroyRoom, addCustomSong, removeCustomSong, removePlayer, renamePlayer } from './room-service.js';
 import { startMatch, createNextRound, startTimer, submitGuess, revealRound, nextRoundStep, adjustRoundPoints, forceTimeUp } from './game-service.js';
-import { loadSavedPlaylists, parsePlaylistText } from './playlist-editor.js';
+import { loadSavedPlaylists, parsePlaylistText, renderPlaylistEditor } from './playlist-editor.js';
+import { renderPromptBuilder } from './prompt-builder.js';
 
 const state = {
   authUser: null,
@@ -96,6 +97,19 @@ function renderHomeView() {
     });
   }
 
+  const homePlaylistEditor = document.getElementById('home-playlist-editor');
+  if (homePlaylistEditor) {
+    renderPlaylistEditor(homePlaylistEditor, {
+      genres: GENRE_META,
+      onSave: () => { showToast('Lista guardada en local'); },
+    });
+  }
+
+  const homePromptBuilder = document.getElementById('home-prompt-builder');
+  if (homePromptBuilder) {
+    renderPromptBuilder(homePromptBuilder, { genres: GENRE_META });
+  }
+
   loadMyRooms();
 }
 
@@ -129,6 +143,7 @@ async function loadMyRooms() {
         const profile = readStorage('temazos.profile', {});
         if (profile.name) nameInput.value = profile.name;
       }
+      handleJoinRoom();
     });
   });
 
