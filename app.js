@@ -267,7 +267,7 @@ function showGameView() {
 
   const prevInput = document.getElementById('guess-input');
   const savedValue = prevInput?.value || '';
-  const hadFocus = document.activeElement === prevInput;
+  const hadFocus = prevInput && document.activeElement === prevInput;
 
   renderGame({
     room: state.room,
