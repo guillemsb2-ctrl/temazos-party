@@ -2,7 +2,7 @@ import { db, ref, update, get } from './firebase-client.js';
 import { ROOM_TIMER_SECONDS, MODES, calculatePoints, sortPlayers } from './utils.js';
 import { getSongsByGenres } from './songs-data.js';
 
-function pickUnusedSong(room) {
+async function pickUnusedSong(room) {
   const activeGenres = room?.meta?.activeGenres || ['pop'];
   const used = room?.usedSongIds || {};
   let pool = getSongsByGenres(activeGenres).filter((song) => !used[song.id]);
@@ -13,10 +13,19 @@ function pickUnusedSong(room) {
   );
   pool = pool.concat(customPool);
 
+  const globalSnap = await get(ref(db, 'globalSongs'));
+  const globalSongs = globalSnap.exists() ? Object.values(globalSnap.val()) : [];
+  const globalPool = globalSongs.filter((song) =>
+    activeGenres.includes(song.genre) && !used[song.id]
+  );
+  pool = pool.concat(globalPool);
+
   if (!pool.length) {
     pool = getSongsByGenres(activeGenres);
     const allCustom = customSongs.filter((song) => activeGenres.includes(song.genre));
     pool = pool.concat(allCustom);
+    const allGlobal = globalSongs.filter((song) => activeGenres.includes(song.genre));
+    pool = pool.concat(allGlobal);
   }
   if (!pool.length) throw new Error('No hay canciones disponibles');
   return pool[Math.floor(Math.random() * pool.length)];
@@ -26,7 +35,7 @@ export async function startMatch(roomCode) {
   const roomSnap = await get(ref(db, `rooms/${roomCode}`));
   const room = roomSnap.val();
   if (!room) throw new Error('Sala no encontrada');
-  const song = pickUnusedSong(room);
+  const song = await pickUnusedSong(room);
   await update(ref(db), {
     [`rooms/${roomCode}/meta/status`]: 'round_ready',
     [`rooms/${roomCode}/currentRound`]: {
@@ -48,7 +57,7 @@ export async function createNextRound(roomCode) {
   const roomSnap = await get(ref(db, `rooms/${roomCode}`));
   const room = roomSnap.val();
   if (!room) throw new Error('Sala no encontrada');
-  const song = pickUnusedSong(room);
+  const song = await pickUnusedSong(room);
   const nextRoundNumber = Number(room?.currentRound?.roundNumber || 0) + 1;
   const patch = {
     [`rooms/${roomCode}/meta/status`]: 'round_ready',
@@ -189,7 +198,7 @@ export async function nextRoundStep(roomCode) {
   const room = roomSnap.val();
   if (!room) throw new Error('Sala no encontrada');
   if (room?.meta?.status === 'match_finished') return;
-  const song = pickUnusedSong(room);
+  const song = await pickUnusedSong(room);
   const nextRoundNumber = Number(room?.currentRound?.roundNumber || 0) + 1;
   await update(ref(db), {
     [`rooms/${roomCode}/meta/status`]: 'round_ready',

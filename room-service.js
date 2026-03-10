@@ -188,9 +188,9 @@ export async function destroyRoom(roomCode) {
   await remove(ref(db, `rooms/${roomCode}`));
 }
 
-export async function addCustomSong(roomCode, { url, title, year, genre }) {
+export async function addCustomSong({ url, title, year, genre }) {
   const songKey = uid('song');
-  await set(ref(db, `rooms/${roomCode}/customSongs/${songKey}`), {
+  await set(ref(db, `globalSongs/${songKey}`), {
     id: songKey,
     url,
     title,
@@ -200,6 +200,6 @@ export async function addCustomSong(roomCode, { url, title, year, genre }) {
   });
 }
 
-export async function removeCustomSong(roomCode, songKey) {
-  await remove(ref(db, `rooms/${roomCode}/customSongs/${songKey}`));
+export async function removeCustomSong(songKey) {
+  await remove(ref(db, `globalSongs/${songKey}`));
 }
