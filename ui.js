@@ -89,6 +89,7 @@ export function renderMyRooms(myRooms = []) {
       </div>
       <div class="my-room-player-names">${playerArr.map((p) => escapeHtml(p.name || 'Jugador')).join(', ')}</div>
       <button class="btn secondary my-room-enter" data-room-code="${escapeHtml(room.meta?.roomCode || '')}">Entrar</button>
+      ${closed ? `<button class="btn danger my-room-delete" data-delete-room="${escapeHtml(room.meta?.roomCode || '')}">🗑️ Borrar</button>` : ''}
     `;
     list.appendChild(row);
   });

@@ -131,6 +131,19 @@ async function loadMyRooms() {
       }
     });
   });
+
+  document.querySelectorAll('[data-delete-room]').forEach((btn) => {
+    btn.addEventListener('click', async () => runSafe(async () => {
+      const code = btn.dataset.deleteRoom;
+      if (!code) return;
+      if (!confirm('¿Seguro que quieres borrar esta sala? Esta acción no se puede deshacer.')) return;
+      await destroyRoom(code);
+      const myRoomCodes = readStorage('temazos.myRooms', []);
+      writeStorage('temazos.myRooms', myRoomCodes.filter((c) => c !== code));
+      showToast('Sala borrada');
+      loadMyRooms();
+    }));
+  });
 }
 
 /* ── VIEW: LOBBY ── */
@@ -185,7 +198,10 @@ function bindLobbyEvents() {
 
   document.getElementById('btn-destroy-room')?.addEventListener('click', async () => runSafe(async () => {
     if (!confirm('¿Seguro que quieres borrar esta sala? Esta acción no se puede deshacer.')) return;
-    await destroyRoom(state.roomCode);
+    const code = state.roomCode;
+    await destroyRoom(code);
+    const myRoomCodes = readStorage('temazos.myRooms', []);
+    writeStorage('temazos.myRooms', myRoomCodes.filter((c) => c !== code));
     showToast('Sala borrada');
     state.room = null;
     state.roomCode = null;
