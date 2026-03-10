@@ -71,18 +71,18 @@ export function parsePlaylistText(text) {
   return { valid, errors, duplicateCount };
 }
 
-export function loadSavedPlaylists(roomCode) {
-  return readStorage(`temazos.playlists.${roomCode}`, {});
+export function loadSavedPlaylists() {
+  return readStorage('temazos.playlists', {});
 }
 
-export function savePlaylists(roomCode, data) {
-  writeStorage(`temazos.playlists.${roomCode}`, data);
+export function savePlaylists(data) {
+  writeStorage('temazos.playlists', data);
 }
 
-export function renderPlaylistEditor(container, { genres, roomCode, onSave }) {
+export function renderPlaylistEditor(container, { genres, onSave }) {
   container.innerHTML = '';
 
-  const saved = loadSavedPlaylists(roomCode);
+  const saved = loadSavedPlaylists();
 
   Object.values(genres).forEach((genre) => {
     const block = document.createElement('div');
@@ -169,9 +169,9 @@ export function renderPlaylistEditor(container, { genres, roomCode, onSave }) {
 
     block.querySelector('[data-action="save"]').addEventListener('click', () => {
       const result = runValidation();
-      const all = loadSavedPlaylists(roomCode);
+      const all = loadSavedPlaylists();
       all[genre.key] = textarea.value;
-      savePlaylists(roomCode, all);
+      savePlaylists(all);
       if (onSave) onSave(genre.key, result.valid);
     });
 
@@ -179,9 +179,9 @@ export function renderPlaylistEditor(container, { genres, roomCode, onSave }) {
       textarea.value = '';
       block.querySelector(`#${counterId}`).textContent = '0 canciones válidas';
       block.querySelector(`#${errorsId}`).innerHTML = '';
-      const all = loadSavedPlaylists(roomCode);
+      const all = loadSavedPlaylists();
       delete all[genre.key];
-      savePlaylists(roomCode, all);
+      savePlaylists(all);
     });
 
     if (savedText) {

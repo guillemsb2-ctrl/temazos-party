@@ -142,7 +142,6 @@ export function renderConfigView(container, { room, roomCode, onBack, onSaveSett
   const editorContainer = wrap.querySelector('#config-playlist-editor');
   renderPlaylistEditor(editorContainer, {
     genres: GENRE_META,
-    roomCode,
     onSave: (genreKey, validSongs) => {
       if (onSaveSongs) onSaveSongs(genreKey, validSongs);
       updateSummary();
@@ -156,7 +155,7 @@ export function renderConfigView(container, { room, roomCode, onBack, onSaveSett
     const summaryEl = wrap.querySelector('#config-summary');
     if (!summaryEl) return;
 
-    const saved = loadSavedPlaylists(roomCode);
+    const saved = loadSavedPlaylists();
     const customSongs = room?.customSongs ? Object.values(room.customSongs) : [];
     let totalImported = 0;
     let totalDuplicates = 0;

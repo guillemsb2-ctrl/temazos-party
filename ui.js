@@ -172,6 +172,7 @@ export function renderLobby({ room, currentPlayerId, isModerator }) {
         <button class="btn secondary" id="btn-go-config">⚙️ Configuración</button>
         <button class="btn secondary" id="btn-reset-match">🔄 Nueva partida</button>
         <button class="btn danger" id="btn-close-room">🚪 Cerrar sala</button>
+        ${meta.closed ? '<button class="btn danger" id="btn-destroy-room">🗑️ Borrar sala</button>' : ''}
       </div>
     </section>
     ` : `

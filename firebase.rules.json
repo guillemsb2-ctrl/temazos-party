@@ -5,6 +5,10 @@
       "$room": {
         ".write": "auth != null"
       }
+    },
+    "globalSongs": {
+      ".read": "auth != null",
+      ".write": "auth != null"
     }
   }
 }

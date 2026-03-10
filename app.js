@@ -3,7 +3,7 @@ import { renderHome, renderMyRooms, renderLobby, renderGame, showToast, setAuthP
 import { renderConfigView } from './config-view.js';
 import { GENRE_META } from './songs-data.js';
 import { MODES, safeUpperRoom, readStorage, writeStorage, roomShareUrl, clamp, uid } from './utils.js';
-import { createRoom, joinRoom, subscribeRoom, markPresence, leaveRoom, updateRoomSettings, resetScores, closeRoom, addCustomSong, removeCustomSong, removePlayer, renamePlayer } from './room-service.js';
+import { createRoom, joinRoom, subscribeRoom, markPresence, leaveRoom, updateRoomSettings, resetScores, closeRoom, destroyRoom, addCustomSong, removeCustomSong, removePlayer, renamePlayer } from './room-service.js';
 import { startMatch, createNextRound, startTimer, submitGuess, revealRound, nextRoundStep, adjustRoundPoints, forceTimeUp } from './game-service.js';
 import { loadSavedPlaylists, parsePlaylistText } from './playlist-editor.js';
 
@@ -19,6 +19,7 @@ const state = {
   timerTick: null,
   remainingSeconds: 35,
   currentView: 'home',
+  joining: false,
 };
 
 async function boot() {
@@ -173,6 +174,18 @@ function bindLobbyEvents() {
     await closeRoom(state.roomCode);
     showToast('Sala cerrada');
   }));
+
+  document.getElementById('btn-destroy-room')?.addEventListener('click', async () => runSafe(async () => {
+    if (!confirm('¿Seguro que quieres borrar esta sala? Esta acción no se puede deshacer.')) return;
+    await destroyRoom(state.roomCode);
+    showToast('Sala borrada');
+    state.room = null;
+    state.roomCode = null;
+    state.playerId = null;
+    state.moderatorToken = null;
+    if (state.roomUnsub) { state.roomUnsub(); state.roomUnsub = null; }
+    renderHomeView();
+  }));
 }
 
 /* ── VIEW: CONFIG ── */
@@ -203,7 +216,7 @@ function showConfigView() {
 async function saveSongsToFirebase(genreKey, validSongs) {
   for (const song of validSongs) {
     const songKey = uid('song');
-    await set(ref(db, `rooms/${state.roomCode}/customSongs/${songKey}`), {
+    await set(ref(db, `globalSongs/${songKey}`), {
       id: songKey,
       url: song.url,
       title: song.title,
@@ -215,9 +228,10 @@ async function saveSongsToFirebase(genreKey, validSongs) {
 }
 
 async function pushImportedSongsToFirebase() {
-  const saved = loadSavedPlaylists(state.roomCode);
-  const existingCustom = state.room?.customSongs ? Object.values(state.room.customSongs) : [];
-  const existingUrls = new Set(existingCustom.map((s) => s.url));
+  const saved = loadSavedPlaylists();
+  const existingSnap = await get(ref(db, 'globalSongs'));
+  const existingGlobal = existingSnap.exists() ? Object.values(existingSnap.val()) : [];
+  const existingUrls = new Set(existingGlobal.map((s) => s.url));
 
   for (const [genreKey, text] of Object.entries(saved)) {
     if (!text) continue;
@@ -226,7 +240,7 @@ async function pushImportedSongsToFirebase() {
       if (existingUrls.has(song.url)) continue;
       existingUrls.add(song.url);
       const songKey = uid('song');
-      await set(ref(db, `rooms/${state.roomCode}/customSongs/${songKey}`), {
+      await set(ref(db, `globalSongs/${songKey}`), {
         id: songKey,
         url: song.url,
         title: song.title,
@@ -305,40 +319,58 @@ function bindGameEvents() {
 /* ── ROOM CONNECTION ── */
 
 async function handleCreateRoom() {
+  if (state.joining) return;
   const playerName = sanitizeName(document.getElementById('home-name').value);
   if (!playerName) return failName();
-  writeStorage('temazos.profile', { name: playerName });
-  const { roomCode, playerId, moderatorToken } = await createRoom({
-    playerName,
-    ownerUid: state.authUser.uid,
-    selectedMode: state.selectedMode,
-    activeGenres: state.selectedGenres,
-  });
-  state.roomCode = roomCode;
-  state.playerId = playerId;
-  state.moderatorToken = moderatorToken;
+  state.joining = true;
+  try {
+    writeStorage('temazos.profile', { name: playerName });
+    const { roomCode, playerId, moderatorToken } = await createRoom({
+      playerName,
+      ownerUid: state.authUser.uid,
+      selectedMode: state.selectedMode,
+      activeGenres: state.selectedGenres,
+    });
+    state.roomCode = roomCode;
+    state.playerId = playerId;
+    state.moderatorToken = moderatorToken;
 
-  const myRooms = readStorage('temazos.myRooms', []);
-  if (!myRooms.includes(roomCode)) {
-    myRooms.push(roomCode);
-    if (myRooms.length > 20) myRooms.shift();
-    writeStorage('temazos.myRooms', myRooms);
+    const myRooms = readStorage('temazos.myRooms', []);
+    if (!myRooms.includes(roomCode)) {
+      myRooms.push(roomCode);
+      if (myRooms.length > 20) myRooms.shift();
+      writeStorage('temazos.myRooms', myRooms);
+    }
+
+    connectToRoom(roomCode);
+  } catch (err) {
+    console.error(err);
+    showToast(err?.message || 'Error al crear sala');
+  } finally {
+    state.joining = false;
   }
-
-  connectToRoom(roomCode);
 }
 
 async function handleJoinRoom() {
+  if (state.joining) return;
   const playerName = sanitizeName(document.getElementById('home-name').value);
   const roomCode = safeUpperRoom(document.getElementById('home-room-code').value);
   if (!playerName) return failName();
   if (!roomCode) return showToast('Pon un código de sala');
-  writeStorage('temazos.profile', { name: playerName });
-  const { playerId, moderatorToken } = await joinRoom({ roomCode, authUid: state.authUser.uid, playerName });
-  state.roomCode = roomCode;
-  state.playerId = playerId;
-  state.moderatorToken = moderatorToken;
-  connectToRoom(roomCode);
+  state.joining = true;
+  try {
+    writeStorage('temazos.profile', { name: playerName });
+    const { playerId, moderatorToken } = await joinRoom({ roomCode, authUid: state.authUser.uid, playerName });
+    state.roomCode = roomCode;
+    state.playerId = playerId;
+    state.moderatorToken = moderatorToken;
+    connectToRoom(roomCode);
+  } catch (err) {
+    console.error(err);
+    showToast(err?.message || 'Error al unirse');
+  } finally {
+    state.joining = false;
+  }
 }
 
 function connectToRoom(roomCode) {
@@ -551,9 +583,6 @@ function bindVisibilityLeave() {
     if (state.roomCode && state.playerId) leaveRoom(state.roomCode, state.playerId);
   });
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden' && state.roomCode && state.playerId) {
-      leaveRoom(state.roomCode, state.playerId);
-    }
     if (document.visibilityState === 'visible' && state.roomCode && state.playerId) {
       markPresence(state.roomCode, state.playerId);
     }
