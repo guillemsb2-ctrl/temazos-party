@@ -154,6 +154,14 @@ function bindLobbyEvents() {
 
   bindPlayerManagementEvents();
 
+  document.querySelectorAll('[data-lobby-mode]').forEach((btn) => {
+    btn.addEventListener('click', async () => runSafe(async () => {
+      const key = btn.dataset.lobbyMode;
+      await updateRoomSettings(state.roomCode, { mode: key, targetScore: MODES[key].targetScore });
+      showToast('Modo cambiado');
+    }));
+  });
+
   document.getElementById('btn-start-match')?.addEventListener('click', async () => runSafe(async () => {
     await pushImportedSongsToFirebase();
     await startMatch(state.roomCode);
