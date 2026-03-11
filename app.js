@@ -485,7 +485,7 @@ function roomFingerprint(room, playerId) {
     rn: round.roundNumber, ph: round.phase, si: round.songId,
     st: round.songTitle, cy: round.correctYear,
     tr: round.timer?.running, te: round.timer?.endsAt,
-    ma: round.answers?.[playerId], rs: round.results,
+    ma: round.answers?.[playerId], ak: Object.keys(round.answers || {}), rs: round.results,
     pl: Object.fromEntries(
       Object.entries(players).map(([id, p]) => [id, { n: p.name, sc: p.score, c: p.connected }])
     ),
