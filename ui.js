@@ -280,7 +280,7 @@ export function renderGame({ room, currentPlayerId, isModerator, remainingSecond
   document.getElementById('phase-pill').textContent = statusLabel(meta.status, meta.isTieBreak).toUpperCase();
 
   const playersList = view.querySelector('#players-list');
-  renderPlayersList(playersList, sortedPlayers, currentPlayerId, round);
+  renderPlayersList(playersList, sortedPlayers, currentPlayerId, round, false, meta.status);
 
   const answerStatus = view.querySelector('#answer-status');
   const myAnswer = round.answers?.[currentPlayerId];
@@ -398,15 +398,17 @@ function renderCompactModeratorPanel(container, { room }) {
 
 /* ── SHARED HELPERS ── */
 
-function renderPlayersList(container, sortedPlayers, currentPlayerId, round, showModActions) {
+function renderPlayersList(container, sortedPlayers, currentPlayerId, round, showModActions, gameStatus) {
   if (!container) return;
   if (!sortedPlayers.length) {
     container.innerHTML = '<p class="muted-text">Aún no hay jugadores. Comparte el enlace para que se unan.</p>';
     return;
   }
   container.innerHTML = '';
+  const isAnsweringPhase = ['round_ready', 'round_timer_running', 'round_time_up'].includes(gameStatus);
   sortedPlayers.forEach((player, index) => {
     const roundResult = round?.results?.[player.id];
+    const hasAnswered = isAnsweringPhase && !!round?.answers?.[player.id];
     const canManage = showModActions && !player.isModerator && player.id !== currentPlayerId;
     const row = document.createElement('div');
     row.className = `player-row${player.id === currentPlayerId ? ' is-me' : ''}${!player.connected ? ' disconnected' : ''}`;
@@ -422,6 +424,7 @@ function renderPlayersList(container, sortedPlayers, currentPlayerId, round, sho
           <div class="player-meta">
             <span class="connected-dot" style="opacity:${player.connected ? 1 : .25}"></span>
             ${player.connected ? '<span class="connected-text">conectado</span>' : '<span class="disconnected-text">desconectado</span>'}
+            ${hasAnswered ? '<span class="answered-badge">✓ respondido</span>' : ''}
             ${roundResult ? ` · ronda ${signed(roundResult.finalPoints || 0)}` : ''}
           </div>
         </div>
