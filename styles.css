@@ -123,6 +123,7 @@ input:focus { border-color: rgba(0,245,255,.45); box-shadow: 0 0 0 3px rgba(0,24
 .timer-box { margin-top: 12px; padding: 18px; text-align:center; }
 .timer-ring { width: 120px; height: 120px; margin: 0 auto 12px; border-radius:50%; border: 2px solid rgba(0,245,255,.28); display:grid; place-items:center; box-shadow: inset 0 0 30px rgba(0,245,255,.06), 0 0 22px rgba(0,245,255,.08); }
 .timer-ring span { font-family:'Bebas Neue', cursive; font-size: 58px; color: var(--cyan); }
+.song-open-box { margin-top: 10px; text-align:center; }
 .answer-box { display:grid; grid-template-columns: 1fr; gap: 10px; margin-top: 14px; }
 .reveal-box { margin-top: 14px; min-height: 24px; }
 .reveal-box .song-title { font-family:'Bebas Neue', cursive; font-size: 34px; letter-spacing:1px; }

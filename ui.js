@@ -255,9 +255,10 @@ export function renderGame({ room, currentPlayerId, isModerator, remainingSecond
         <div class="card-head compact">
           <span class="eyebrow">tu respuesta</span>
           <h3 id="round-title-display">${round.songTitle
-            ? (['round_revealed', 'match_finished'].includes(meta.status) ? escapeHtml(round.songTitle) : 'Canción cargada')
+            ? escapeHtml(round.songTitle)
             : 'Esperando ronda'}</h3>
         </div>
+        ${round.songUrl ? `<div class="song-open-box"><button class="btn secondary" id="btn-open-song-player">🎵 Abrir canción</button></div>` : ''}
         <div class="timer-box">
           <div class="timer-ring">
             <span id="timer-display">${remainingSeconds}</span>
