@@ -326,6 +326,7 @@ function bindGameEvents() {
 
   document.getElementById('btn-back-lobby')?.addEventListener('click', () => showLobbyView());
   document.getElementById('btn-back-lobby-mod')?.addEventListener('click', () => showLobbyView());
+  document.getElementById('btn-open-song-player')?.addEventListener('click', () => openSongLink());
 
   if (!isModerator()) return;
 
