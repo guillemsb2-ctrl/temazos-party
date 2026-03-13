@@ -156,7 +156,6 @@ export function renderConfigView(container, { room, roomCode, onBack, onSaveSett
     if (!summaryEl) return;
 
     const saved = loadSavedPlaylists();
-    const customSongs = room?.customSongs ? Object.values(room.customSongs) : [];
     let totalImported = 0;
     let totalDuplicates = 0;
     let emptyActiveGenres = [];
@@ -166,8 +165,7 @@ export function renderConfigView(container, { room, roomCode, onBack, onSaveSett
       const builtIn = getSongsByGenres([genre.key]);
       const text = saved[genre.key] || '';
       const parsed = text ? parsePlaylistText(text) : { valid: [], duplicateCount: 0 };
-      const customForGenre = customSongs.filter((s) => s.genre === genre.key);
-      const totalForGenre = builtIn.length + parsed.valid.length + customForGenre.length;
+      const totalForGenre = builtIn.length + parsed.valid.length;
       const isActive = activeGenres.includes(genre.key);
 
       totalImported += parsed.valid.length;
@@ -187,7 +185,6 @@ export function renderConfigView(container, { room, roomCode, onBack, onSaveSett
     });
 
     const totalBuiltIn = getSongsByGenres(activeGenres).length;
-    const totalCustom = customSongs.filter((s) => activeGenres.includes(s.genre)).length;
 
     const activeImported = Object.values(GENRE_META)
       .filter((g) => activeGenres.includes(g.key))
@@ -197,7 +194,7 @@ export function renderConfigView(container, { room, roomCode, onBack, onSaveSett
         return sum + parsed.valid.length;
       }, 0);
 
-    const totalPool = totalBuiltIn + totalCustom + activeImported;
+    const totalPool = totalBuiltIn + activeImported;
 
     let warnings = '';
     if (emptyActiveGenres.length) {
@@ -208,8 +205,8 @@ export function renderConfigView(container, { room, roomCode, onBack, onSaveSett
       <div class="summary-grid-stats">
         <div class="mini-card"><span>Pool total activo</span><strong>${totalPool}</strong></div>
         <div class="mini-card"><span>Built-in activas</span><strong>${totalBuiltIn}</strong></div>
-        <div class="mini-card"><span>Importadas</span><strong>${totalImported}</strong></div>
-        <div class="mini-card"><span>Custom Firebase</span><strong>${totalCustom}</strong></div>
+        <div class="mini-card"><span>Importadas activas</span><strong>${activeImported}</strong></div>
+        <div class="mini-card"><span>Total importadas</span><strong>${totalImported}</strong></div>
         <div class="mini-card"><span>Duplicadas eliminadas</span><strong>${totalDuplicates}</strong></div>
         <div class="mini-card"><span>Ya jugadas</span><strong>${Object.keys(room?.usedSongIds || {}).length}</strong></div>
       </div>
