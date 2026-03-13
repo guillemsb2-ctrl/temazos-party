@@ -13,19 +13,10 @@ async function pickUnusedSong(room) {
   );
   pool = pool.concat(customPool);
 
-  const globalSnap = await get(ref(db, 'globalSongs'));
-  const globalSongs = globalSnap.exists() ? Object.values(globalSnap.val()) : [];
-  const globalPool = globalSongs.filter((song) =>
-    activeGenres.includes(song.genre) && !used[song.id]
-  );
-  pool = pool.concat(globalPool);
-
   if (!pool.length) {
     pool = getSongsByGenres(activeGenres);
     const allCustom = customSongs.filter((song) => activeGenres.includes(song.genre));
     pool = pool.concat(allCustom);
-    const allGlobal = globalSongs.filter((song) => activeGenres.includes(song.genre));
-    pool = pool.concat(allGlobal);
   }
   if (!pool.length) throw new Error('No hay canciones disponibles');
   return pool[Math.floor(Math.random() * pool.length)];
@@ -42,8 +33,8 @@ export async function startMatch(roomCode) {
       roundNumber: 1,
       phase: 'round_ready',
       songId: song.id,
-      songUrl: song.url,
-      songTitle: song.title,
+      songUrl: (song.url || '').trim(),
+      songTitle: (song.title || '').trim(),
       correctYear: song.year,
       timer: { duration: ROOM_TIMER_SECONDS, startedAt: null, endsAt: null, running: false },
       answers: {},
@@ -65,8 +56,8 @@ export async function createNextRound(roomCode) {
       roundNumber: nextRoundNumber,
       phase: 'round_ready',
       songId: song.id,
-      songUrl: song.url,
-      songTitle: song.title,
+      songUrl: (song.url || '').trim(),
+      songTitle: (song.title || '').trim(),
       correctYear: song.year,
       timer: { duration: ROOM_TIMER_SECONDS, startedAt: null, endsAt: null, running: false },
       answers: {},
@@ -206,8 +197,8 @@ export async function nextRoundStep(roomCode) {
       roundNumber: nextRoundNumber,
       phase: 'round_ready',
       songId: song.id,
-      songUrl: song.url,
-      songTitle: song.title,
+      songUrl: (song.url || '').trim(),
+      songTitle: (song.title || '').trim(),
       correctYear: song.year,
       timer: { duration: ROOM_TIMER_SECONDS, startedAt: null, endsAt: null, running: false },
       answers: {},

@@ -2,8 +2,8 @@ import { ensureAnonymousAuth, db, ref, get, set } from './firebase-client.js';
 import { renderHome, renderMyRooms, renderLobby, renderGame, showToast, setAuthPill } from './ui.js';
 import { renderConfigView } from './config-view.js';
 import { GENRE_META } from './songs-data.js';
-import { MODES, safeUpperRoom, readStorage, writeStorage, roomShareUrl, clamp, uid } from './utils.js';
-import { createRoom, joinRoom, subscribeRoom, markPresence, leaveRoom, updateRoomSettings, resetScores, closeRoom, destroyRoom, addCustomSong, removeCustomSong, removePlayer, renamePlayer } from './room-service.js';
+import { MODES, safeUpperRoom, readStorage, writeStorage, roomShareUrl, clamp } from './utils.js';
+import { createRoom, joinRoom, subscribeRoom, markPresence, leaveRoom, updateRoomSettings, resetScores, closeRoom, destroyRoom, removePlayer, renamePlayer } from './room-service.js';
 import { startMatch, createNextRound, startTimer, submitGuess, revealRound, nextRoundStep, adjustRoundPoints, forceTimeUp } from './game-service.js';
 import { loadSavedPlaylists, parsePlaylistText, renderPlaylistEditor } from './playlist-editor.js';
 import { renderPromptBuilder } from './prompt-builder.js';
@@ -191,7 +191,7 @@ function bindLobbyEvents() {
   });
 
   document.getElementById('btn-start-match')?.addEventListener('click', async () => runSafe(async () => {
-    await pushImportedSongsToFirebase();
+    await syncPlaylistsToRoom(state.roomCode);
     await startMatch(state.roomCode);
     showToast('Partida iniciada');
     showGameView();
@@ -245,50 +245,49 @@ function showConfigView() {
     },
     onSaveSongs: async (genreKey, validSongs) => {
       await runSafe(async () => {
-        await saveSongsToFirebase(genreKey, validSongs);
+        await syncPlaylistsToRoom(state.roomCode);
         showToast(`${validSongs.length} canciones de ${genreKey} guardadas`);
       });
     },
   });
 }
 
-async function saveSongsToFirebase(genreKey, validSongs) {
-  for (const song of validSongs) {
-    const songKey = uid('song');
-    await set(ref(db, `globalSongs/${songKey}`), {
-      id: songKey,
-      url: song.url,
-      title: song.title,
-      year: Number(song.year),
-      genre: genreKey,
-      addedAt: Date.now(),
-    });
+function importSongKey(genreKey, url) {
+  // Java-style hash (prime 31) for deterministic, collision-resistant keys
+  let h = 0;
+  for (let i = 0; i < url.length; i++) {
+    h = Math.imul(31, h) + url.charCodeAt(i) | 0;
   }
+  return `import_${genreKey}_${(h >>> 0).toString(36)}`;
 }
 
-async function pushImportedSongsToFirebase() {
+async function syncPlaylistsToRoom(roomCode) {
+  if (!roomCode) return;
   const saved = loadSavedPlaylists();
-  const existingSnap = await get(ref(db, 'globalSongs'));
-  const existingGlobal = existingSnap.exists() ? Object.values(existingSnap.val()) : [];
-  const existingUrls = new Set(existingGlobal.map((s) => s.url));
+  const seenUrls = new Set();
+  const songs = {};
 
   for (const [genreKey, text] of Object.entries(saved)) {
     if (!text) continue;
     const { valid } = parsePlaylistText(text);
     for (const song of valid) {
-      if (existingUrls.has(song.url)) continue;
-      existingUrls.add(song.url);
-      const songKey = uid('song');
-      await set(ref(db, `globalSongs/${songKey}`), {
+      // Deduplicate by URL: same URL across genres = same song, keep first occurrence
+      const trimmedUrl = (song.url || '').trim();
+      if (!trimmedUrl || seenUrls.has(trimmedUrl)) continue;
+      seenUrls.add(trimmedUrl);
+      const songKey = importSongKey(genreKey, trimmedUrl);
+      songs[songKey] = {
         id: songKey,
-        url: song.url,
-        title: song.title,
+        url: trimmedUrl,
+        title: (song.title || '').trim(),
         year: Number(song.year),
         genre: genreKey,
         addedAt: Date.now(),
-      });
+      };
     }
   }
+
+  await set(ref(db, `rooms/${roomCode}/customSongs`), Object.keys(songs).length ? songs : null);
 }
 
 /* ── VIEW: GAME ── */
@@ -549,7 +548,7 @@ async function fallbackCopy(url) {
 }
 
 function openSongLink() {
-  const songUrl = state.room?.currentRound?.songUrl;
+  const songUrl = (state.room?.currentRound?.songUrl || '').trim();
   if (!songUrl) return showToast('No hay canción cargada');
   const opened = window.open(songUrl, '_blank', 'noopener,noreferrer');
   if (!opened) {

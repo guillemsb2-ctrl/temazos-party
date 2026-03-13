@@ -182,6 +182,7 @@ export function renderPlaylistEditor(container, { genres, onSave }) {
       const all = loadSavedPlaylists();
       delete all[genre.key];
       savePlaylists(all);
+      if (onSave) onSave(genre.key, []);
     });
 
     if (savedText) {
