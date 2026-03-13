@@ -253,6 +253,7 @@ function showConfigView() {
 }
 
 function importSongKey(genreKey, url) {
+  // Java-style hash (prime 31) for deterministic, collision-resistant keys
   let h = 0;
   for (let i = 0; i < url.length; i++) {
     h = Math.imul(31, h) + url.charCodeAt(i) | 0;
@@ -270,6 +271,7 @@ async function syncPlaylistsToRoom(roomCode) {
     if (!text) continue;
     const { valid } = parsePlaylistText(text);
     for (const song of valid) {
+      // Deduplicate by URL: same URL across genres = same song, keep first occurrence
       const trimmedUrl = (song.url || '').trim();
       if (!trimmedUrl || seenUrls.has(trimmedUrl)) continue;
       seenUrls.add(trimmedUrl);
